@@ -2,7 +2,7 @@
 G-NAV is an electronic flight instrument system (EFIS) for soaring that runs as a progressive web application (PWA) in most mobile web browsers (Chrome, Safari and others).
 The application can be installed locally in the client browser and it starts up and runs offline like a native app.
 
-G-NAV is almost entirely written in Ada and it is compiled to WASM through AdaWebPack. Furthermore, G-NAV fully relies on WebGL for graphics.
+G-NAV is almost entirely written in Ada and it is compiled to [WASM](https://webassembly.org/) through [AdaWebPack](https://github.com/godunko/adawebpack). Furthermore, G-NAV fully relies on WebGL for graphics.
 There is also a native version of the software that you can find [here](https://github.com/GuillermoHazebrouck/gnav).
 
 <img src="./docs/gnav_1.jpg" width="400">
@@ -13,7 +13,7 @@ Visit the project [website](https://sites.google.com/view/g-nav/news) for a demo
 To operate G-NAV, please read the user's manual located in the docs folder. Be aware that the project is still under development.
 
 ## Compiling
-G-NAV web consists of two modules: the web application itself and the data compiler. For the web app you will need [AdaWebPack](https://github.com/godunko/adawebpack). The compilation procedure is similar to that of the examples you will find there.
+G-NAV web consists of two modules: the web application itself and the data compiler. For the web app you will need AdaWebPack. The compilation procedure is similar to that of the examples you will find there.
 For the data compiler you will need a native Ada FSF compiler.
 
 ## Releases
