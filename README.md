@@ -11,7 +11,7 @@ Visit the project [website](https://sites.google.com/view/g-nav/news) for a demo
 There is also a native version of the software that you can find [here](https://github.com/GuillermoHazebrouck/gnav). The applications are quite similar, although there will be more and more discrepancies as this project evolves.
 
 ## Operation
-To operate G-NAV, please read the user's manual located in the docs folder. Be aware that the project is still under development.
+To operate G-NAV, please read the user's manual located in the `docs` folder. This document covers the user functions and the web system administration. Be aware that the project is still under development.
 
 > [!CAUTION]
 > G-NAV is not a certified IFR equipment! You should never use this device as a primary source of navigation or collision avoidance.
