@@ -11,7 +11,7 @@ Visit the project [website](https://sites.google.com/view/g-nav/news) for a demo
 To operate G-NAV, please read the user's manual located in the docs folder. Be aware that the project is still under development.
 
 ## Compiling
-G-NAV web consists of two modules: the web application itself and the data compiler. For the web app you will need AdaWebPack. The copilation procedure is similar to that of the examples you will find there.
+G-NAV web consists of two modules: the web application itself and the data compiler. For the web app you will need [AdaWebPack](https://github.com/godunko/adawebpack). The compilation procedure is similar to that of the examples you will find there.
 
 For the data compiler you will need a native Ada FSF compiler.
 
