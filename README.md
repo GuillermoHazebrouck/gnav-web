@@ -1,5 +1,6 @@
 # G-NAV
-G-NAV is an electronic flight instrument system (EFIS) for soaring that runs as a progressive web application (PWA) in most mobile web browsers.
+G-NAV is an electronic flight instrument system (EFIS) for soaring that runs as a progressive web application (PWA) in most mobile web browsers (Chrome, Safari and others).
+The application can be installed locally in the client browser and it starts up and runs offline like a native app.
 G-NAV is almost entirely written in Ada and it is compiled to WASM through AdaWebPack. Furthermore, G-NAV fully relies on WebGL for graphics.
 There is also a native version of the software that you can find [here](https://github.com/GuillermoHazebrouck/gnav).
 
