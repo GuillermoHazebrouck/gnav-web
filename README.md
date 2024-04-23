@@ -27,6 +27,9 @@ For the data compiler you will need a native Ada FSF compiler.
 ## Releases
 Keep an eye on the [releases](https://github.com/GuillermoHazebrouck/gnav-web/releases), there will be precompiled versions in the future.
 
+## Data
+The project does not provide any data yet, you will need to collect your own dataset to build a functional system.
+
 ## Credits
 This software is made possible thanks to:
 - Guillermo Hazebrouck for everything in this repo (G-NAV)
