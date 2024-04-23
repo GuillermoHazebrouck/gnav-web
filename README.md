@@ -22,7 +22,7 @@ For the data compiler you will need a native Ada FSF compiler.
 
 > [!TIP]
 > To make your life easier you can just use the released version of AdaWebPack. You will need LLVM 4.0 for this.
-> Also, the `src` directory contains a temporal patch directory where you can find a modified version of `adawebpack.mjs`, which is necessary for this project to overcome issues.
+> Also, the `src` directory contains a temporal `patch` directory where you can find a modified version of `adawebpack.mjs`, which is necessary for this project to overcome issues.
 
 ## Releases
 Keep an eye on the [releases](https://github.com/GuillermoHazebrouck/gnav-web/releases), there will be precompiled versions in the future.
