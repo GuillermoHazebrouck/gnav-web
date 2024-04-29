@@ -491,7 +491,7 @@ package body Display.Pages.Strips is
                   
             end if;
             
-            Glex.Fonts.Draw (Flight_Plan.Waypoints (I).Get_Margin_Image,
+            Glex.Fonts.Draw (Flight_Plan.Waypoints (I).Get_Margin,
                              X + 0.65, 
                              Y,
                              Font_1,

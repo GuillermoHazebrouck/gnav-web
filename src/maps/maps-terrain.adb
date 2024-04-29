@@ -176,12 +176,6 @@ package body Maps.Terrain is
             Grid_T  : Integer;
             Grid_R  : Integer;
 
-            -- The increase of position for each tile
-            -----------------------------------------------
-            P  : Position_Record;
-            P0 : Position_Record;
-            PD : Position_Record;
-
          begin
 
             On_Clip := False;
@@ -271,15 +265,6 @@ package body Maps.Terrain is
 
             end if;
 
-            -- Position reference and increment
-            --------------------------------------------------------------------
-
-            P0.Lat    := South_West.Lat + Long_Float (Grid_B - 1) * Long_Float (Cell_Size_Lat);
-            P0.Lon    := South_West.Lon + Long_Float (Grid_L - 1) * Long_Float (Cell_Size_Lon);
-
-            PD.Lat    := Long_Float (Tile_Step_Y) * Long_Float (Cell_Size_Lat);
-            PD.Lon    := Long_Float (Tile_Step_X) * Long_Float (Cell_Size_Lon);
-
             declare
 
                X, Y, Z : Float;
@@ -288,7 +273,20 @@ package body Maps.Terrain is
                I2, J2  : Natural;
                R, G, B : Float;
 
+               P  : Position_Record;
+               P0 : Position_Record;
+               PD : Position_Record;
+
             begin
+
+               -- Position reference and increment
+               --------------------------------------------------------------------
+
+               P0.Lat := South_West.Lat + Long_Float (Grid_B - 1) * Long_Float (Cell_Size_Lat);
+               P0.Lon := South_West.Lon + Long_Float (Grid_L - 1) * Long_Float (Cell_Size_Lon);
+
+               PD.Lat := Long_Float (Tile_Step_Y) * Long_Float (Cell_Size_Lat);
+               PD.Lon := Long_Float (Tile_Step_X) * Long_Float (Cell_Size_Lon);
 
                -- Vertices
                --------------------
@@ -323,7 +321,7 @@ package body Maps.Terrain is
 
                   end loop;
 
-                  P.Lat := P0.Lat + PD.Lat;
+                  P.Lat := P.Lat + PD.Lat;
 
                   Y := Y + Tile_Size_Y;
 

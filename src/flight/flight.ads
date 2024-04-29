@@ -165,7 +165,8 @@ package Flight is
    Data : Flight_Data_Record := No_Flight_Data;
    
    --===========================================================================
-   -- Loads the current position to the circular buffer
+   -- Loads the current position to the circular buffer.
+   -- This methiod will trigger On_Data_Cached.
    --===========================================================================
    procedure Cache_Data;
    

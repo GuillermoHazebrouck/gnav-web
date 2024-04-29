@@ -135,7 +135,7 @@ package Flight.Aircraft is
       --------------------------------------------------------------------------
       V_S0 : Float := 0.0;
               
-      -- The recomended landing speed [EAS] (in m/s) = 1.3 * Vs1 + 0.5 * Vw
+      -- The recomended landing speed [EAS] (in m/s) = 1.3 * Vs0 + 0.5 * Vw
       --------------------------------------------------------------------------
       V_LND : Float := 0.0;
          

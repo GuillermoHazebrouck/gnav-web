@@ -8,7 +8,7 @@
 --                                                                          --
 ------------------------------------------------------------------------------
 --                                                                          --
--- Copyright Â© 2016-2022, Vadim Godunko <vgodunko@gmail.com>                --
+-- Copyright © 2016-2022, Vadim Godunko <vgodunko@gmail.com>                --
 -- All rights reserved.                                                     --
 --                                                                          --
 -- Redistribution and use in source and binary forms, with or without       --
@@ -48,29 +48,27 @@ with Web.DOM.Event_Targets;
 with Web.Strings;
 
 --//////////////////////////////////////////////////////////////////////////////
---
+-- This is a new wrapper on XHR requests that provides methods for direct
+-- access on the data.
+-- All modifications made for the G-NAV project made by Guillermo Hazebrouck.
 --//////////////////////////////////////////////////////////////////////////////
 package Utility.Requests is
 
    pragma Preelaborate;
 
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   --
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    subtype State is Web.DOM_Unsigned_Short range 0 .. 4;
 
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   -- State values
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    UNSENT           : constant State := 0;
-   --  The object has been constructed.
    OPENED           : constant State := 1;
-   --  The open() method has been successfully invoked. During this state
-   --  request headers can be set using setRequestHeader() and the request
-   --  can be made using the send() method.
    HEADERS_RECEIVED : constant State := 2;
-   --  All redirects (if any) have been followed and all HTTP headers of the
-   --  final response have been received. Several response members of the
-   --  object are now available.
    LOADING          : constant State := 3;
-   --  The response entity body is being received.
    DONE             : constant State := 4;
-   --  The data transfer has been completed or something went wrong during the
-   --  transfer (e.g. infinite redirects).
 
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    --
@@ -83,14 +81,9 @@ package Utility.Requests is
                                Text);
 
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   --
+   -- An XHR request
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   type XML_Http_Request is new WASM.Objects.Object_Reference
-     and Web.DOM.Event_Targets.Event_Target
---   and Web.XHR.Event_Targets.XML_Http_Request_Event_Target
-       with null record;
---   type XML_Http_Request is limited new WebAPI.XHR.Event_Targets.Event_Target
---     with private;
+   type XML_Http_Request is new WASM.Objects.Object_Reference and Web.DOM.Event_Targets.Event_Target with null record;
 
    --===========================================================================
    -- The XMLHttpRequest object can be in several states. The readyState
@@ -164,6 +157,18 @@ package Utility.Requests is
    --===========================================================================
    function Get_Size (This : Stream_Reader_Type) return Natural;
 
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   -- 2 bytes natural
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   type Short_Natural is range 0..2 ** 16 - 1;
+   for Short_Natural'Size use Short_Integer'Size;
+
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   -- 1 byte natural
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   type Short_Short_Natural is range 0..2 ** 8 - 1;
+   for Short_Short_Natural'Size use Short_Short_Integer'Size;
+
    --===========================================================================
    --
    --===========================================================================
@@ -173,6 +178,16 @@ package Utility.Requests is
    --
    --===========================================================================
    function Read_Integer (This : in out Stream_Reader_Type) return Integer;
+
+   --===========================================================================
+   --
+   --===========================================================================
+   function Read_Short_Short_Natural (This : in out Stream_Reader_Type) return Short_Short_Natural;
+
+   --===========================================================================
+   --
+   --===========================================================================
+   function Read_Short_Natural (This : in out Stream_Reader_Type) return Short_Natural;
 
    --===========================================================================
    --

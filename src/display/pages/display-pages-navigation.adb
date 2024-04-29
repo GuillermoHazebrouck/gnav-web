@@ -29,7 +29,6 @@ with Flight;
 with Flight.Aircraft;
 with Flight.Plan;
 with Flight.Representation;
-with Flight.Signal;
 --with Flight.Stream;
 with Glex;
 with Glex.Basic;
@@ -811,7 +810,7 @@ package body Display.Pages.Navigation is
       
       if Flight.Data.Is_Recent (Flight.Field_Position) then
          
-         Glex.Fonts.Draw (Text      => Flight.Plan.Next_Waypoint.Get_Required_Altitude_Image,
+         Glex.Fonts.Draw (Text      => Flight.Plan.Next_Waypoint.Get_Required_Altitude,
                           X         => Btn_Ascent_Min.Get_Allocation.X - 0.02,
                           Y         => Btn_Ascent_Min.Get_Allocation.Y + 0.02,
                           Style     => Font_3,
@@ -841,7 +840,7 @@ package body Display.Pages.Navigation is
       
       if Flight.Data.Is_Recent (Flight.Field_Position) then
          
-         Glex.Fonts.Draw (Text      => Flight.Plan.Next_Waypoint.Get_Optimal_Speed_Image,
+         Glex.Fonts.Draw (Text      => Flight.Plan.Next_Waypoint.Get_Optimal_Speed,
                           X         => Btn_Ascent_Min.Get_Allocation.X - 0.02,
                           Y         => Btn_Ascent_Min.Get_Allocation.Y + 0.09,
                           Style     => Font_3,

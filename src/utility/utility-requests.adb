@@ -691,6 +691,56 @@ package body Utility.Requests is
 
 
 
+   Short_Natural_Size : constant Stream_Element_Offset := Short_Natural'Max_Size_In_Storage_Elements;
+
+   --===========================================================================
+   --
+   --===========================================================================
+   function Read_Short_Natural (This : in out Stream_Reader_Type) return Short_Natural is
+   begin
+
+      if This.Buffer.Data'Last >= This.Cursor + Short_Natural_Size - 1 then
+         declare
+            V : Short_Natural; for V'Address use This.Buffer.Data (This.Cursor)'Address;
+         begin
+            This.Cursor := This.Cursor + Short_Natural_Size;
+            return V;
+         end;
+
+      else
+         return 0;
+      end if;
+
+   end Read_Short_Natural;
+   -----------------------------------------------------------------------------
+
+
+
+   Short_Short_Natural_Size : constant Stream_Element_Offset := Short_Short_Natural'Max_Size_In_Storage_Elements;
+
+   --===========================================================================
+   --
+   --===========================================================================
+   function Read_Short_Short_Natural (This : in out Stream_Reader_Type) return Short_Short_Natural is
+   begin
+
+      if This.Buffer.Data'Last >= This.Cursor + Short_Short_Natural_Size - 1 then
+         declare
+            V : Short_Short_Natural; for V'Address use This.Buffer.Data (This.Cursor)'Address;
+         begin
+            This.Cursor := This.Cursor + Short_Short_Natural_Size;
+            return V;
+         end;
+
+      else
+         return 0;
+      end if;
+
+   end Read_Short_Short_Natural;
+   -----------------------------------------------------------------------------
+
+
+
    Natural_Size : constant Stream_Element_Offset := Natural'Max_Size_In_Storage_Elements;
 
    --===========================================================================

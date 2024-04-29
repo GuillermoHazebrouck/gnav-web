@@ -19,6 +19,7 @@
 --------------------------------------------------------------------------------
 -- Depencencies
 --//////////////////////////////////////////////////////////////////////////////
+with Utility.Events;
 with Utility.Streams;
 use  Utility.Streams;
 with Glex.Colormap;
@@ -48,6 +49,11 @@ package Maps.Terrain is
    -- Returns an info string
    --===========================================================================
    function Get_Info return String;
+
+   --===========================================================================
+   -- Indicates when the terrain is loaded
+   --===========================================================================
+   On_Loaded : Utility.Events.Event_Stack;
 
 private
 

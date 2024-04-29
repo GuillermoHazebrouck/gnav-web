@@ -91,32 +91,32 @@ package Flight.Plan is
    --===========================================================================
    -- A string representation the bearing to the waypoint
    --===========================================================================
-   function Get_Bearing_Image (This : Waypoint_Record) return String;
+   function Get_Bearing (This : Waypoint_Record) return String;
 
    --===========================================================================
    -- A string representation the distance to the waypoint
    --===========================================================================
-   function Get_Distance_Image (This : Waypoint_Record) return String;
+   function Get_Distance (This : Waypoint_Record) return String;
 
    --===========================================================================
    -- A string representation of the vector
    --===========================================================================
-   function Get_Vector_Image (This : Waypoint_Record) return String;
+   function Get_Vector (This : Waypoint_Record) return String;
 
    --===========================================================================
    -- A string representation of the altitude margin
    --===========================================================================
-   function Get_Margin_Image (This : Waypoint_Record) return String;
+   function Get_Margin (This : Waypoint_Record) return String;
 
    --===========================================================================
    -- A string representation of the required altitude
    --===========================================================================
-   function Get_Required_Altitude_Image (This : Waypoint_Record) return String;
+   function Get_Required_Altitude (This : Waypoint_Record) return String;
 
    --===========================================================================
    -- A string representation of the optimal airspeed
    --===========================================================================
-   function Get_Optimal_Speed_Image (This : Waypoint_Record) return String;
+   function Get_Optimal_Speed (This : Waypoint_Record) return String;
 
    --===========================================================================
    --
@@ -216,6 +216,10 @@ package Flight.Plan is
 
       Go_Back   : Boolean;
 
+      Length    : Float;
+
+      Distance  : Float;
+
       Is_Loaded : Boolean;
 
    end record;
@@ -236,6 +240,16 @@ package Flight.Plan is
    procedure Set_Go_Back (This : in out Flight_Plan_Record; Value : Boolean);
 
    --===========================================================================
+   -- Returns the total length of the route
+   --===========================================================================
+   function Get_Length (This : Flight_Plan_Record) return String;
+
+   --===========================================================================
+   -- Returns the maxium distance from home
+   --===========================================================================
+   function Get_Distance (This : Flight_Plan_Record) return String;
+
+   --===========================================================================
    -- Returns the active flight plan
    --===========================================================================
    function Flight_Plan return access Flight_Plan_Record;
@@ -248,6 +262,8 @@ package Flight.Plan is
                                                            Target    => Waypoint_Range'First,
                                                            Tasks     => (others => No_Task_Record),
                                                            Go_Back   => False,
+                                                           Length    => 0.0,
+                                                           Distance  => 0.0,
                                                            Is_Loaded => False);
 
    --===========================================================================

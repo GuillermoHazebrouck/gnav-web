@@ -130,8 +130,8 @@ package body Display.Pages.Route_Edition is
 
    -- Font for the position
    ---------------------------------
-   Font_1 : Glex.Fonts.Font_Style_Record := (Width     => 0.014,
-                                             Height    => 0.036,
+   Font_1 : Glex.Fonts.Font_Style_Record := (Width     => 0.009,
+                                             Height    => 0.040,
                                              Space     => 0.006,
                                              Rendering => Glex.Fonts.Font_Glow,
                                              Thickness => Glex.Fonts.Font_Regular);
@@ -264,7 +264,7 @@ package body Display.Pages.Route_Edition is
 
       --
 
-      Allocation.X := Btn_Route_Previous.Get_Allocation.X + 0.53 * W;
+      Allocation.X := Btn_Route_Previous.Get_Allocation.X + 0.52 * W;
 
       Btn_Route_Next.Set_Label (">");
 
@@ -293,7 +293,7 @@ package body Display.Pages.Route_Edition is
 
       --
 
-      Allocation.X := Btn_Route_Append.Get_Allocation.X + 0.53 * W;
+      Allocation.X := Btn_Route_Append.Get_Allocation.X + 0.52 * W;
 
       Btn_Route_Remove.Set_Label ("X");
 
@@ -346,7 +346,7 @@ package body Display.Pages.Route_Edition is
       -- Next waypoint
       ------------------------------------------------------
 
-      Allocation.X := Btn_Wypnt_Previous.Get_Allocation.X + 0.53 * W;
+      Allocation.X := Btn_Wypnt_Previous.Get_Allocation.X + 0.52 * W;
 
       Btn_Wypnt_Next.Set_Label (">");
 
@@ -730,8 +730,20 @@ package body Display.Pages.Route_Edition is
 
          Btn_Center_Aircraft.Draw;
 
-         Draw (Maps.Image (Flight.Plan.Next_Waypoint.Position),
-               0.5, 0.05, Font_1, Line_Magenta, Alignment_CC);
+         Draw (Maps.Lat_Image (Flight.Plan.Next_Waypoint.Position),
+               0.01, 0.80, Font_1, Line_Magenta, Alignment_LL);
+
+         Draw (Maps.Lon_Image (Flight.Plan.Next_Waypoint.Position),
+               0.01, 0.72, Font_1, Line_Magenta, Alignment_LL);
+
+         Draw ("}" & Utility.Strings.Float_Image (Flight.Plan.Next_Waypoint.Elevation, 0) & "M",
+               0.01, 0.64, Font_1, Line_Yellow, Alignment_LL);
+
+         Draw ("-R> " & Flight.Plan.Flight_Plan.Get_Length,
+               0.01, 0.56, Font_1, Line_White, Alignment_LL);
+
+         Draw ("-D> " & Flight.Plan.Flight_Plan.Get_Distance,
+               0.01, 0.48, Font_1, Line_White, Alignment_LL);
 
       end if;
 
@@ -934,8 +946,6 @@ package body Display.Pages.Route_Edition is
 
          end;
 
-         Flight.Plan.Next_Waypoint.Elevation := Maps.Terrain.Get_Elevation (Flight.Plan.Next_Waypoint.Position);
-
          Flight_Plan.Recompute_Tasks;
 
          Flight.Plan.Modified := True;
@@ -955,8 +965,6 @@ package body Display.Pages.Route_Edition is
             Flight.Plan.Next_Waypoint.Position := Maps.Position (Flight.Plan.Next_Waypoint.Position, Step_Vector);
 
          end;
-
-         Flight.Plan.Next_Waypoint.Elevation := Maps.Terrain.Get_Elevation (Flight.Plan.Next_Waypoint.Position);
 
          Flight_Plan.Recompute_Tasks;
 

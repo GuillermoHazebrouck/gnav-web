@@ -34,11 +34,16 @@ package Flight.Traffic is
    -- Connects the timed signal that maintains the tracks
    --===========================================================================
    procedure Initialize;
+    
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   -- Indicates if the request are sent
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
+   Active : Boolean := True;
    
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    --
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   subtype Traffic_Id is String (1..10);
+   subtype Traffic_Id is String (1..6);
    
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    --
@@ -113,21 +118,11 @@ package Flight.Traffic is
                                                    Course     => 0.0,      
                                                    No_Track   => False,
                                                    Coasted    => False);
-                                                  
-   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   -- The range of traffic objects in the viscinity
-   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   type Traffic_Range is new Positive range 1..100;
-         
+        
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    -- Contains the traffic objects
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   Traffic_Data : array (Traffic_Range) of Traffic_Record := (others => No_Traffic_Record);
+   Traffic_Data : array (1..100) of Traffic_Record := (others => No_Traffic_Record);
       
-   --===========================================================================
-   -- Puts the track in the storage, taking into account its identity
-   --===========================================================================
-   procedure Keep_Track (Element : Traffic_Record);
-   
 end Flight.Traffic;
 --------------------------------------------------------------------------------

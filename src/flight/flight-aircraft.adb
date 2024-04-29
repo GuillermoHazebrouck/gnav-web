@@ -58,11 +58,6 @@ package body Flight.Aircraft is
       
       Setup_Modified := False;
 
-   exception
-      when others => 
-         
-         Utility.Log.Put_Message ("error while reading aircraft setup");
-
    end Read_Setup;
    -----------------------------------------------------------------------------  
    
@@ -874,7 +869,7 @@ package body Flight.Aircraft is
       
       Changed : Boolean := False;
       
-      Radius : constant Float := 1.0 / 120.0; -- about 900m in latitude
+      Radius : constant Float := 0.025;
       
       Wind_Delta : constant Long_Float := Math.Pi / 36.0;
       
@@ -915,7 +910,9 @@ package body Flight.Aircraft is
       --------------------------------------------------------------------------
              
       if Maps.Distance (Flight.Data.Position, Range_Cone.Center) > Radius then
-            
+         
+         Utility.Log.Put_Message ("update cone center:" & Image (Range_Cone.Center));
+         
          Range_Cone.Center := Flight.Data.Position;
            
          Changed := True;

@@ -196,8 +196,6 @@ package body Maps.Layers is
 
       end loop;
 
-      Utility.Log.Put_Message (Integer_Image (N));
-
       Glex.Get_Transform.Load_Unit;
 
    end Draw;

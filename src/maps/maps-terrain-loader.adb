@@ -128,6 +128,7 @@ package body Maps.Terrain.Loader is
          if Parts = 5 then
             Loaded := True;
             Utility.Log.Put_Message ("terrain loaded");
+            Maps.Terrain.On_Loaded.Trigger;
          end if;
 
       end if;

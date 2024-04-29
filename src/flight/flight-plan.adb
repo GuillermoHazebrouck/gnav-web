@@ -41,12 +41,29 @@ package body Flight.Plan is
    --===========================================================================
    --
    --===========================================================================
+   procedure Recompute_All_Tasks is
+   begin
+
+      for F in Flight_Plan_Range loop
+
+         Flight_Plans (F).Recompute_Tasks;
+
+      end loop;
+
+   end Recompute_All_Tasks;
+   -----------------------------------------------------------------------------
+
+
+
+
+   --===========================================================================
+   --
+   --===========================================================================
    procedure Initialize is
    begin
 
       if Append_Flight_Plan then
-         Utility.Strings.Override (Flight.Plan.Home_Waypoint.Name, Gnav_Info.Home_Name);
-         Flight.Plan.Home_Waypoint.Position := Gnav_Info.Home_Position;
+         null;
       end if;
 
       Read_Flight_Plans;
@@ -56,6 +73,8 @@ package body Flight.Plan is
 
       Timing.Events.Register_Timer (Timer    => 5.0,
                                     Callback => Save_If_Modified'Access);
+
+      Maps.Terrain.On_Loaded.Connect (Recompute_All_Tasks'Access);
 
    end Initialize;
    -----------------------------------------------------------------------------
@@ -71,12 +90,12 @@ package body Flight.Plan is
    --===========================================================================
    -- (See specification file)
    --===========================================================================
-   function Get_Bearing_Image (This : Waypoint_Record) return String is
+   function Get_Bearing (This : Waypoint_Record) return String is
    begin
 
       return Utility.Strings.Float_Image (This.Bearing, 0) & "*";
 
-   end Get_Bearing_Image;
+   end Get_Bearing;
    -----------------------------------------------------------------------------
 
 
@@ -85,7 +104,7 @@ package body Flight.Plan is
    --===========================================================================
    -- (See specification file)
    --===========================================================================
-   function Get_Distance_Image (This : Waypoint_Record) return String is
+   function Get_Distance (This : Waypoint_Record) return String is
    begin
 
       if This.Distance < 10.0 then
@@ -98,7 +117,7 @@ package body Flight.Plan is
 
       end if;
 
-   end Get_Distance_Image;
+   end Get_Distance;
    -----------------------------------------------------------------------------
 
 
@@ -107,7 +126,7 @@ package body Flight.Plan is
    --===========================================================================
    -- (See specification file)
    --===========================================================================
-   function Get_Vector_Image (This : Waypoint_Record) return String is
+   function Get_Vector (This : Waypoint_Record) return String is
    begin
 
       if This.Distance < 10.0 then
@@ -120,7 +139,7 @@ package body Flight.Plan is
 
       end if;
 
-   end Get_Vector_Image;
+   end Get_Vector;
    -----------------------------------------------------------------------------
 
 
@@ -129,7 +148,7 @@ package body Flight.Plan is
    --===========================================================================
    -- (See specification file)
    --===========================================================================
-   function Get_Margin_Image (This : Waypoint_Record) return String is
+   function Get_Margin (This : Waypoint_Record) return String is
 
       use Utility.Strings;
 
@@ -150,7 +169,7 @@ package body Flight.Plan is
       end if;
 
 
-   end Get_Margin_Image;
+   end Get_Margin;
    -----------------------------------------------------------------------------
 
 
@@ -159,7 +178,7 @@ package body Flight.Plan is
    --===========================================================================
    -- (See specification file)
    --===========================================================================
-   function Get_Required_Altitude_Image (This : Waypoint_Record) return String is
+   function Get_Required_Altitude (This : Waypoint_Record) return String is
 
       use Utility.Strings;
 
@@ -179,7 +198,7 @@ package body Flight.Plan is
 
       end if;
 
-   end Get_Required_Altitude_Image;
+   end Get_Required_Altitude;
    -----------------------------------------------------------------------------
 
 
@@ -188,7 +207,7 @@ package body Flight.Plan is
    --===========================================================================
    -- (See specification file)
    --===========================================================================
-   function Get_Optimal_Speed_Image (This : Waypoint_Record) return String is
+   function Get_Optimal_Speed (This : Waypoint_Record) return String is
 
       use Utility.Strings;
 
@@ -204,7 +223,7 @@ package body Flight.Plan is
 
       end if;
 
-   end Get_Optimal_Speed_Image;
+   end Get_Optimal_Speed;
    -----------------------------------------------------------------------------
 
 
@@ -218,11 +237,7 @@ package body Flight.Plan is
 
       -- TODO: read flight plans from local storage
 
-      for F in Flight_Plan_Range loop
-
-         Flight_Plans (F).Recompute_Tasks;
-
-      end loop;
+      Recompute_All_Tasks;
 
    end Read_Flight_Plans;
    -----------------------------------------------------------------------------
@@ -462,11 +477,11 @@ package body Flight.Plan is
 
       This.Is_Loaded := True;
 
-      Override (This.Waypoints (1).Name, "HOME");
+      Override (This.Waypoints (1).Name, Gnav_Info.Home_Name);
 
       This.Waypoints (1).Is_Loaded := True;
 
-      This.Waypoints (1).Position  := Flight.Data.Position;
+      This.Waypoints (1).Position  := Gnav_Info.Home_Position;
 
       This.Recompute_Tasks;
 
@@ -482,7 +497,9 @@ package body Flight.Plan is
    procedure Recompute_Tasks (This : in out Flight_Plan_Record) is
    begin
 
-      This.Tasks := (others => No_Task_Record);
+      This.Tasks    := (others => No_Task_Record);
+      This.Length   := 0.0;
+      This.Distance := 0.0;
 
       for W in Waypoint_Range loop
 
@@ -522,6 +539,18 @@ package body Flight.Plan is
 
          This.Tasks (W).Is_Active := This.Tasks (W).Point_B.Is_Active;
 
+         This.Length := This.Length + This.Tasks (W).Length;
+
+      end loop;
+
+      for Waypoint of This.Waypoints loop
+
+         exit when not Waypoint.Is_Loaded;
+
+         This.Distance := Float'Max (This.Distance, Maps.Distance (This.Waypoints (1).Position, Waypoint.Position));
+
+         Waypoint.Elevation := Maps.Terrain.Get_Elevation (Waypoint.Position);
+
       end loop;
 
    end Recompute_Tasks;
@@ -545,6 +574,48 @@ package body Flight.Plan is
       end if;
 
    end Set_Go_Back;
+   -----------------------------------------------------------------------------
+
+
+
+
+   --===========================================================================
+   -- (See specification file)
+   --===========================================================================
+   function Get_Length (This : Flight_Plan_Record) return String is
+   begin
+
+      return Float_Image (This.Length, 1);
+
+   end Get_Length;
+   -----------------------------------------------------------------------------
+
+
+
+
+   --===========================================================================
+   -- (See specification file)
+   --===========================================================================
+   function Get_Distance (This : Flight_Plan_Record) return String is
+   begin
+
+      return Float_Image (This.Distance, 1);
+
+   end Get_Distance;
+   -----------------------------------------------------------------------------
+
+
+
+
+   --===========================================================================
+   -- (See specification file)
+   --===========================================================================
+   function Get_Length (This : Flight_Plan_Record) return Float is
+   begin
+
+      return This.Length;
+
+   end Get_Length;
    -----------------------------------------------------------------------------
 
 

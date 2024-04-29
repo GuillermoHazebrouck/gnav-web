@@ -546,28 +546,28 @@ package body Display.Panels.Gauges is
 
       Pnl_Home.Draw;
 
-      Glex.Fonts.Draw (Flight.Plan.Next_Waypoint.Get_Distance_Image,
+      Glex.Fonts.Draw (Flight.Plan.Next_Waypoint.Get_Distance,
                        0.88,
                        0.07,
                        Font_2,
                        Line_Magenta,
                        Glex.Fonts.Alignment_LR);
 
-      Glex.Fonts.Draw (Flight.Plan.Next_Waypoint.Get_Bearing_Image,
+      Glex.Fonts.Draw (Flight.Plan.Next_Waypoint.Get_Bearing,
                        0.88,
                        0.02,
                        Font_2,
                        Line_Magenta,
                        Glex.Fonts.Alignment_LR);
 
-      Glex.Fonts.Draw (Flight.Plan.Home_Waypoint.Get_Distance_Image,
+      Glex.Fonts.Draw (Flight.Plan.Home_Waypoint.Get_Distance,
                        0.99,
                        0.07,
                        Font_2,
                        Line_Grass,
                        Glex.Fonts.Alignment_LR);
 
-      Glex.Fonts.Draw (Flight.Plan.Home_Waypoint.Get_Bearing_Image,
+      Glex.Fonts.Draw (Flight.Plan.Home_Waypoint.Get_Bearing,
                        0.99,
                        0.02,
                        Font_2,

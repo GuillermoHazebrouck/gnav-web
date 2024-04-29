@@ -120,7 +120,7 @@ package Maps is
    No_Altitude : constant Float := -10000.0;
 
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   -- The function that returns the altitude in straight glide
+   -- The function that returns the estimated arrival altitude at a given position
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    Range_Cone_Function : access function (Position : Position_Record) return Float := null;
 
@@ -137,7 +137,7 @@ package Maps is
       Zoom         : Float           := 0.0;
       Zero         : Float           := 0.0;
       Mode         : Terrain_Modes   := Colormap;
-      Shadow       : Boolean         := True;
+      Shadow       : Boolean         := False;
       Cone_Margin  : Float           := 200.0;
       Cone_Active  : Boolean         := False;
       Show_Terrain : Boolean         := True;

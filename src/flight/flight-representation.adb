@@ -55,12 +55,10 @@ package body Flight.Representation is
 
    Vector_Waypoint : Glex.Lines.Resource_Type;
 
-   Trajectory      : Glex.Lines.Buffer_Type := Glex.Lines.New_Buffer (30);
-
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    -- The number of clusters
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   subtype Cluster_Range is Positive range 1..80;
+   subtype Cluster_Range is Positive range 1..30;
 
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    -- The current cluster
@@ -81,7 +79,12 @@ package body Flight.Representation is
    -- When the buffer reaches this size (or a bit more), the cluster is no
    -- longer updated and a new one is allocated.
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   Size_Threshold : constant Natural := 30;
+   Cluster_Size : constant Natural := 30;
+
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   -- The buffer containing the last cluster
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   Trajectory : Glex.Lines.Buffer_Type := Glex.Lines.New_Buffer (Cluster_Size);
 
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    -- Indicates if the cluster should be updated due to one or more new points
@@ -98,26 +101,51 @@ package body Flight.Representation is
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    Last_Position : Position_Record := No_Position_Record;
 
-   Last_Load     : Times;
-
    --===========================================================================
    -- (See specification file)
    --===========================================================================
    procedure Load_Trajectory_Point is
    begin
 
-      if Data.Is_Update (Field_Position) then
+      if
+        Data.Is_Update (Field_Position) and then
+        Data.Position /= Last_Position
+      then
 
-         -- TODO: use Move_To when the previous point is too far or too old
+         declare
+            D : Float := Distance (Data.Position, Last_Position);
+            P : Point_Record;
+         begin
 
-         Trajectory.Line_To (Float (Data.Position.Lon),
-                             Float (Data.Position.Lat));
+            if    D > 2.500 then
 
-         Last_Position := Data.Position;
+               P := Maps.Position_To_Map (Data.Position);
 
-         Point_Pending := True;
+               Trajectory.Move_To (Float (P.Get_X),
+                                   Float (P.Get_Y));
+
+               Last_Position := Data.Position;
+
+               Point_Pending := True;
+
+            elsif D > 0.200  then
+
+               P := Maps.Position_To_Map (Data.Position);
+
+               Trajectory.Line_To (Float (P.Get_X),
+                                   Float (P.Get_Y));
+
+               Last_Position := Data.Position;
+
+               Point_Pending := True;
+
+            end if;
+
+         end;
 
       end if;
+
+      Flush_Path;
 
    end Load_Trajectory_Point;
    -----------------------------------------------------------------------------
@@ -142,8 +170,6 @@ package body Flight.Representation is
          Reset_Pending := False;
 
          Point_Pending := False;
-
-         Utility.Log.Put_Message ("trajectory reset");
 
       end if;
 
@@ -176,8 +202,6 @@ package body Flight.Representation is
 
    begin
 
-    --Flight.On_Data_Cached.Connect (Load_Trajectory_Point'Access);
-
       Airplane_Buffer.Move_To ( 0.00, 0.20);
       Airplane_Buffer.Line_To ( 0.00,-0.50);
 
@@ -188,6 +212,10 @@ package body Flight.Representation is
       Airplane_Buffer.Line_To (-0.15,-0.50);
 
       Airplane.Load (Airplane_Buffer);
+
+      -- Listen to every data cache
+      ----------------------------------------------------
+      Flight.On_Data_Cached.Connect (Load_Trajectory_Point'Access);
 
       -- Listen to data reset (replay and other cases)
       ----------------------------------------------------
@@ -218,15 +246,21 @@ package body Flight.Representation is
 
          -- Jump to the next cluster if necessary
          -----------------------------------------------
-         if Trajectory.Line_Count >= Size_Threshold then
+         if Trajectory.Line_Count >= Cluster_Size then
 
             Trajectory.Reset;
 
-            Trajectory.Move_To (Float (Last_Position.Lon),
-                                Float (Last_Position.Lat));
+            declare
+               P : Point_Record := Maps.Position_To_Map (Data.Position);
+            begin
 
-            --Utility.Log.Put_Message ("new cluster" & Cluster_Range'Image (C));
+               Trajectory.Move_To (Float (P.Get_X),
+                                   Float (P.Get_Y));
 
+            end;
+
+            -- Recycle buffer when reached the end
+            -----------------------------------------------
             if C = Cluster_Range'Last then
                C := 1;
             else
@@ -249,15 +283,13 @@ package body Flight.Representation is
    procedure Draw_Trajectory (View : Map_View_Record) is
    begin
 
-      Glex.Get_Transform.Copy (View.Get_Geographic_Matrix);
-
       Check_Trajectory_Reset;
 
       Glex.Get_Transform.Copy (View.Get_Geographic_Matrix);
 
       for I in Cluster_Range loop
 
-         Clusters (I).Draw (Color_Gray_2, 0.1);
+         Clusters (I).Draw (Color_Gray_2, 0.002 * View.Zoom);
 
       end loop;
 
@@ -434,7 +466,7 @@ package body Flight.Representation is
 
    begin
 
-      for T in Traffic_Range loop
+      for T in Traffic_Data'Range loop
 
          if Traffic_Data (T).Active then
 

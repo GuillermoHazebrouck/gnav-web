@@ -36,15 +36,17 @@ package Flight.Representation is
    procedure Initialize;
 
    --===========================================================================
+   -- Draws the flight trajectory and traffic
+   --===========================================================================
+   procedure Draw (View : Map_View_Record);
+
+private
+
+   --===========================================================================
    -- Loads the pending trajectory point into the buffer (this must be done even
    -- when the path is not drawn).
    --===========================================================================
    procedure Flush_Path;
-
-   --===========================================================================
-   -- Draws the flight trajectory and traffic
-   --===========================================================================
-   procedure Draw (View : Map_View_Record);
 
 end Flight.Representation;
 --------------------------------------------------------------------------------

@@ -96,7 +96,7 @@ package body Utility.Resources is
                   Dummy : Stream_Reader_Type := No_Stream_Reader;
                begin
 
-                  -- TODO: check this, it seeps to cause an exception
+                  -- TODO: check this, it seems to cause an exception
                   -- Active_Handler (Dummy);
                   null;
 
