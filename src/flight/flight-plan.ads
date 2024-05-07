@@ -149,7 +149,7 @@ package Flight.Plan is
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    --
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   type Waypoint_Range is new Positive range 1..15;
+   subtype Waypoint_Range is Positive range 1..15;
 
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    --
@@ -297,19 +297,14 @@ package Flight.Plan is
    type Flight_Plan_Array is array (Flight_Plan_Range) of aliased Flight_Plan_Record;
 
    --===========================================================================
-   -- Loads the flight plans from memory
+   -- Loads the flight plans from the local storage
    --===========================================================================
-   procedure Read_Flight_Plans;
+   procedure Load_Configuration;
 
    --===========================================================================
-   -- Writes all flight plans to the disk
+   -- Saves the flight plans to the local storage
    --===========================================================================
-   procedure Write_Flight_Plans;
-
-   --===========================================================================
-   -- Saves the flight plan if there where changes (when Modified is true)
-   --===========================================================================
-   procedure Save_If_Modified;
+   procedure Save_Configuration;
 
    --===========================================================================
    -- Updates the waypoint status using the latest flight data

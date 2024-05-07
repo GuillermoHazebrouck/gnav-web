@@ -498,6 +498,8 @@ package body Display.Pages.Glider is
 
          Btn_Model.Set_Label (Trim (This_Aircraft.Model) & "/" & Trim (This_Aircraft.Registration));
 
+         Flight.Aircraft.Modified := True;
+
          Display.Refresh := True;
 
       else
@@ -520,6 +522,8 @@ package body Display.Pages.Glider is
 
                   Flight.Aircraft.Recalculate_Mass;
 
+                  Flight.Aircraft.Modified := True;
+
                   Display.Refresh := True;
 
                   return;
@@ -529,6 +533,8 @@ package body Display.Pages.Glider is
                   This_Aircraft.Mass_Points (I).Mass := Float'Max (0.0, This_Aircraft.Mass_Points (I).Mass - 1.0);
 
                   Flight.Aircraft.Recalculate_Mass;
+
+                  Flight.Aircraft.Modified := True;
 
                   Display.Refresh := True;
 

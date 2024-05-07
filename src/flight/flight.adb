@@ -316,6 +316,90 @@ package body Flight is
    --===========================================================================
    -- (See specification file)
    --===========================================================================
+   function Variation (Field : Data_Field_Kind) return Float is
+      I0, I1, I2 : History_Range;
+      D1, D2 : Float := 0.0;
+   begin
+
+      I0 := Current;
+      I1 := I0;
+      Get_Previous_Index (I1);
+      I2 := I1;
+      Get_Previous_Index (I2);
+
+      case Field is
+
+         when Field_Position =>
+
+            if
+              History (I0).Is_Update (Field) and
+              History (I1).Is_Update (Field) and
+              History (I2).Is_Update (Field)
+            then
+               D1 := Float (Distance (History (I0).Position, History (I1).Position));
+               D2 := Float (Distance (History (I1).Position, History (I2).Position));
+            end if;
+
+         when others =>
+
+            return 0.0;
+
+      end case;
+
+      if D1 > 0.0 then
+
+         return abs (D1 - D2) / D1;
+
+      else
+         return 1.0;
+
+      end if;
+
+   end Variation;
+   -----------------------------------------------------------------------------
+
+
+
+
+   --===========================================================================
+   -- (See specification file)
+   --===========================================================================
+   function Step (Field : Data_Field_Kind) return Float is
+      I0, I1 : History_Range;
+   begin
+
+      I0 := Current;
+      I1 := Current;
+      Get_Previous_Index (I1);
+
+      case Field is
+
+         when Field_Position =>
+
+            if
+              History (I0).Is_Update (Field) and
+              History (I1).Is_Update (Field)
+            then
+               return Float (Distance (History (I0).Position, History (I1).Position));
+            end if;
+
+         when others =>
+
+            return 0.0;
+
+      end case;
+
+      return 0.0;
+
+   end Step;
+   -----------------------------------------------------------------------------
+
+
+
+
+   --===========================================================================
+   -- (See specification file)
+   --===========================================================================
    function Get_Local_Time return Times is
    begin
 

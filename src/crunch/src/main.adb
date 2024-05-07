@@ -29,6 +29,7 @@ with References;
 with Layers;
 with Layers.Airspaces;
 with Aircraft;
+with Traffic;
 with Utility;
 use  Utility;
 
@@ -39,6 +40,11 @@ use  Utility;
 procedure Main is
 begin
 
+   Ada.Text_IO.Put_Line ("---------------------------------");
+   Ada.Text_IO.Put_Line ("-- G-NAV PROJECT DATA COMPILER --");
+   Ada.Text_IO.Put_Line ("-- VERSION 1A                  --");
+   Ada.Text_IO.Put_Line ("---------------------------------");
+
    if Ada.Command_Line.Argument_Count = 0 then
 
       Ada.Text_IO.Put_Line ("Please specify a dataset to process:");
@@ -46,6 +52,7 @@ begin
       Ada.Text_IO.Put_Line ("REFERENCES");
       Ada.Text_IO.Put_Line ("LAYERS");
       Ada.Text_IO.Put_Line ("AIRCRAFT");
+      Ada.Text_IO.Put_Line ("TRAFFIC");
 
       return;
 
@@ -96,6 +103,12 @@ begin
 
                Aircraft.Compile_Data;
 
+            elsif Key = "TRAFFIC" then
+
+               Ada.Text_IO.Put_Line ("processing traffic data...");
+
+               Traffic.Start_Tracker;
+
             else
 
                Ada.Text_IO.Put_Line ("invalid instruction " & Key);
@@ -108,5 +121,5 @@ begin
 
    end loop;
 
-
 end Main;
+--------------------------------------------------------------------------------

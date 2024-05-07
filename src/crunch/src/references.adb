@@ -124,7 +124,7 @@ package body References is
 
                      References (R).Is_Loaded := True;
 
-                     Ada.Text_IO.Put_Line (References (R).Id & "=>" & Utility.Maps.Image (References (R).Position));
+                     -- Ada.Text_IO.Put_Line (References (R).Id & "=>" & Utility.Maps.Image (References (R).Position));
 
                   end if;
 
@@ -140,7 +140,7 @@ package body References is
 
       if R > 0 then
 
-         Ada.Text_IO.Put_Line ("loaded" & Natural'Image (R) & " reference locations");
+         Ada.Text_IO.Put_Line ("size  :" & Natural'Image (R));
 
       else
 
@@ -173,7 +173,7 @@ package body References is
 
       if R > 0 then
 
-         Ada.Text_Io.Put_Line ("compiling references...");
+         Ada.Text_IO.Put_Line ("usage :" & Natural'Image (R * 100 / References'Length) & "%");
 
          -- Start writing
          -----------------------------------------------------------------------

@@ -76,9 +76,19 @@ package Utility.Strings is
    procedure Dump_Content (Object : in out String_Buffer);
    
    --===========================================================================
-   --
+   -- The current character
    --===========================================================================
    function Current (Object : String_Buffer) return Character;
+   
+   --===========================================================================
+   -- Appends a value to the buffer at the current position
+   --===========================================================================
+   procedure Append (Object : in out String_Buffer; Value : String);
+   
+   --===========================================================================
+   -- Returns the current content of the buffer
+   --===========================================================================
+   function Get_Content (Object : in out String_Buffer) return String;
    
    --===========================================================================
    -- Returns the text in upper case characters
@@ -115,6 +125,12 @@ package Utility.Strings is
    -- Returns the image of the integer value
    --===========================================================================
    function Integer_Image (Value : Integer) return String;
+   
+   --===========================================================================
+   -- If the value is a valid number, it returns the value, otherwise the
+   -- default
+   --===========================================================================
+   function Integer_Value (Value : String; Default : Integer) return Integer;
    
    --===========================================================================
    -- Returns the image of the floating point value (own implementation)

@@ -13,8 +13,7 @@ const precachedResources = ["/",
                             "/reference.bin",
                             "/layers.bin",
                             "/airspaces.bin",
-                            "/aircraft.bin",
-                            "/traffic.bin"];
+                            "/aircraft.bin"];
 
 async function precache() {
   const cache = await caches.open(cacheName);
@@ -42,7 +41,8 @@ async function networkFirst(request) {
 self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
   if ((url.pathname === "/traffic.bin") || (url.pathname === "/metar.dat")) {
-    event.respondWith(networkFirst(event.request));
+    //event.respondWith(networkFirst(event.request));
+    return;
   } else {
     event.respondWith(caches.match(event.request));
   }

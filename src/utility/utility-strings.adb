@@ -148,6 +148,55 @@ package body Utility.Strings is
 
 
 
+
+   --===========================================================================
+   --
+   --===========================================================================
+   procedure Append (Object : in out String_Buffer; Value : String) is
+   begin
+
+      if Object.Offset = Object.Buffer_Size then
+         return;
+      end if;
+
+      for C of Value loop
+
+         Object.Buffer (Object.Offset) := C;
+
+         if Object.Offset = Object.Buffer_Size then
+            return;
+         else
+            Object.Offset := Object.Offset + 1;
+            Object.Length := Object.Length + 1;
+            Object.Loaded := True;
+         end if;
+
+      end loop;
+
+   end Append;
+   -----------------------------------------------------------------------------
+
+
+
+
+   --===========================================================================
+   --
+   --===========================================================================
+   function Get_Content (Object : in out String_Buffer) return String is
+   begin
+
+      if Object.Loaded then
+         return Object.Buffer (1..Object.Length);
+      else
+         return "";
+      end if;
+
+   end Get_Content;
+   -----------------------------------------------------------------------------
+
+
+
+
    --===========================================================================
    --
    --===========================================================================
@@ -540,6 +589,21 @@ package body Utility.Strings is
 
 
 
+
+   --===========================================================================
+   -- (See specification file)
+   --===========================================================================
+   function Integer_Value (Value : String; Default : Integer) return Integer is
+   begin
+
+      return Integer (Float_Value (Value, Float (Default)));
+
+   end Integer_Value;
+   -----------------------------------------------------------------------------
+
+
+
+
    --===========================================================================
    -- (See specification file)
    --===========================================================================
@@ -892,7 +956,7 @@ package body Utility.Strings is
                when 'W' => Result (I) := 'W';
                when 'X' => Result (I) := 'X';
                when 'Y' => Result (I) := 'Y';
-               when 'Z' => Result (I) := 'z';
+               when 'Z' => Result (I) := 'Z';
                when '0' => Result (I) := '0';
                when '1' => Result (I) := '1';
                when '2' => Result (I) := '2';
@@ -1097,7 +1161,7 @@ package body Utility.Strings is
                when 'W' => Result (I) := 'W';
                when 'X' => Result (I) := 'X';
                when 'Y' => Result (I) := 'Y';
-               when 'Z' => Result (I) := 'z';
+               when 'Z' => Result (I) := 'Z';
                when '0' => Result (I) := '0';
                when '1' => Result (I) := '1';
                when '2' => Result (I) := '2';

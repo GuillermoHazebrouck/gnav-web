@@ -6,7 +6,7 @@ project gnav is
 
    for Target use "llvm";
    for Object_Dir use ".objs";
-   for Source_Dirs use (".", "math", "stacks", "utility", "timing", "glex", "widgets", "display", "maps", "display/pages", "display/panels", "flight");
+   for Source_Dirs use (".", "math", "utility", "timing", "glex", "widgets", "display", "maps", "display/pages", "display/panels", "flight");
    for Main use ("main.adb");
    for Exec_Dir use ".";
 

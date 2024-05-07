@@ -22,6 +22,7 @@
 --//////////////////////////////////////////////////////////////////////////////
 
 -- Standard
+with Ada.Command_Line;
 with Ada.Directories;
 with Ada.Exceptions;
 with Ada.Text_IO;
@@ -42,8 +43,14 @@ use  Utility.Maps;
 --//////////////////////////////////////////////////////////////////////////////
 package body Terrain is
 
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   --
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    package Short_Math renames Ada.Numerics.Short_Elementary_Functions;
 
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   --
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    subtype Terrain_Range is Natural range 1 .. 20_000_000;
 
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -519,30 +526,74 @@ package body Terrain is
       File_Id : File_Type;
       Stream  : Stream_Access;
 
-      Rx : constant Natural := 2; --> resolution in longitude
-      Ry : constant Natural := 1; --> resolution in latitude
-
-      Nx : constant Natural := N / Rx;
-      Ny : constant Natural := M / Ry;
-      T  : constant Natural := Nx * Ny;
       S  : constant Natural := 5; --> number of parts
-      D  : constant Natural := T / S + S;
 
-      Cx : constant Float   := (Cell_Size * Float (N)) / Float (Nx);
-      Cy : constant Float   := (Cell_Size * Float (M)) / Float (Ny);
+      Rx : Natural := 2; --> resolution in longitude
+      Ry : Natural := 1; --> resolution in latitude
+
+      Nx : Natural;
+      Ny : Natural;
+      T  : Natural;
+      D  : Natural;
+
+      Cx : Float;
+      Cy : Float;
 
       O, K, C, F, P : Natural := 0;
 
    begin
 
-      if N * M <= Terrain'Length then
+      -- Read command line arguments
+      --------------------------------------------------------------------------
+      for I in 1..Ada.Command_Line.Argument_Count loop
 
-         Ada.Text_Io.Put_Line ("cutting terrain...");
+         declare
+            Argument : String_Buffer (100);
+         begin
 
-         Ada.Text_Io.Put_Line ("Short_Integer  =" & Integer'Image ((Short_Integer'Max_Size_In_Storage_Elements)));
-         Ada.Text_Io.Put_Line ("Natural        =" & Integer'Image ((Natural'Max_Size_In_Storage_Elements)));
-         Ada.Text_Io.Put_Line ("Float          =" & Integer'Image ((Float'Max_Size_In_Storage_Elements)));
-         Ada.Text_Io.Put_Line ("Long_Float     =" & Integer'Image ((Long_Float'Max_Size_In_Storage_Elements)));
+            Argument.Load (Ada.Command_Line.Argument (I));
+
+            declare
+               Key : String := Argument.Read_Next ('=');
+               Val : String := Argument.Read_Next ('=');
+            begin
+
+               if    Key = "RX" then
+
+                  Rx := Natural'Value (Val);
+
+               elsif Key = "RY" then
+
+                  Ry := Natural'Value (Val);
+
+               end if;
+
+            end;
+
+         end;
+
+      end loop;
+      --------------------------------------------------------------------------
+
+      Nx := N / Rx;
+      Ny := M / Ry;
+      T  := Nx * Ny;
+      D  := T / S + S;
+
+      Cx := (Cell_Size * Float (N)) / Float (Nx);
+      Cy := (Cell_Size * Float (M)) / Float (Ny);
+
+      -- Note that by specification, the maximum number of nodes in the output
+      -- is limited to 10 millon.
+      --------------------------------------------------------------------------
+      if Nx * Ny <= 10_000_000 then
+
+         Ada.Text_Io.Put_Line ("writing header");
+
+         -- Ada.Text_Io.Put_Line ("Short_Integer  :" & Integer'Image ((Short_Integer'Max_Size_In_Storage_Elements)));
+         -- Ada.Text_Io.Put_Line ("Natural        :" & Integer'Image ((Natural'Max_Size_In_Storage_Elements)));
+         -- Ada.Text_Io.Put_Line ("Float          :" & Integer'Image ((Float'Max_Size_In_Storage_Elements)));
+         -- Ada.Text_Io.Put_Line ("Long_Float     :" & Integer'Image ((Long_Float'Max_Size_In_Storage_Elements)));
 
          Create (File => File_Id,
                  Mode => Out_File,
@@ -565,21 +616,24 @@ package body Terrain is
          Float'Write (Stream, Z_Min_Global); --36
          Float'Write (Stream, Z_Max_Global); --40
 
-         Ada.Text_Io.Put_Line ("Nx:" & Natural'Image (Nx));
-         Ada.Text_Io.Put_Line ("Ny:" & Natural'Image (Ny));
+         Ada.Text_Io.Put_Line ("Nx :" & Natural'Image (Nx));
+         Ada.Text_Io.Put_Line ("Ny :" & Natural'Image (Ny));
 
-         Ada.Text_Io.Put_Line ("Cx:" & Float'Image (Cx) & " ->" & Float'Image (Lon_Size (Cx, Float (Middle.Lat))) & "km");
-         Ada.Text_Io.Put_Line ("Cy:" & Float'Image (Cy) & " ->" & Float'Image (Lat_Size (Cy))                     & "km");
+         Ada.Text_Io.Put_Line ("Cx :" & Float'Image (Cx) & "deg ->" & Float'Image (Lon_Size (Cx, Float (Middle.Lat))) & "km");
+         Ada.Text_Io.Put_Line ("Cy :" & Float'Image (Cy) & "deg ->" & Float'Image (Lat_Size (Cy))                     & "km");
 
-         Ada.Text_Io.Put_Line ("Zl:" & Float'Image (Z_Min_Global));
-         Ada.Text_Io.Put_Line ("Zu:" & Float'Image (Z_Max_Global));
+         Ada.Text_Io.Put_Line ("Zl :" & Integer'Image (Integer (Z_Min_Global)) & "m");
+         Ada.Text_Io.Put_Line ("Zu :" & Integer'Image (Integer (Z_Max_Global)) & "m");
 
-         Ada.Text_Io.Put_Line ("Buffer size :" & Natural'Image (T));
-         Ada.Text_Io.Put_Line ("Memory size :" & Natural'Image ((Short_Integer'Size * T) / 8_000_000) & "MB");
+         Ada.Text_Io.Put_Line ("buffer size  :" & Natural'Image (T));
+         Ada.Text_Io.Put_Line ("buffer usage :" & Natural'Image (Natural (Float (T) / 10_000_000.0 * 100.0)) & "%");
+         Ada.Text_Io.Put_Line ("memory size  :" & Natural'Image ((Short_Integer'Size * T) / 8_000_000) & "MB");
 
          P := 1;
          C := 0;
          F := 0;
+
+         Ada.Text_Io.Put_Line ("writing part 1");
 
          Natural'Write (Stream, 1);
 
@@ -628,6 +682,10 @@ package body Terrain is
          end loop;
 
          Close (File_Id);
+
+      else
+         Ada.Text_Io.Put_Line ("ERROR: the output will be too large, consider reducing the resolution or the extension.");
+         Ada.Text_Io.Put_Line ("size" & Natural'Image (Nx * Ny) & " is above 10 millon points.");
 
       end if;
 

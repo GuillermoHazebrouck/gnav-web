@@ -101,10 +101,21 @@ package body Flight.Representation is
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    Last_Position : Position_Record := No_Position_Record;
 
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   -- Indicates if the trajectory must be cut until the position is more stable
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   Wait_For_Stable_Position : Boolean := True;
+
    --===========================================================================
-   -- (See specification file)
+   -- Loads the current position in the trajectory. If the data is varying too
+   -- much (by 50%), it cuts the line and wait until it stabilizes to avoid
+   -- inconsistent jumps. This has been observed when the application is resumed
+   -- after being in the background.
    --===========================================================================
    procedure Load_Trajectory_Point is
+
+      Distance_Threshol : constant Float := 0.1; -- (this is 100m)
+
    begin
 
       if
@@ -113,31 +124,45 @@ package body Flight.Representation is
       then
 
          declare
-            D : Float := Distance (Data.Position, Last_Position);
+            D : Float := Distance  (Data.Position, Last_Position);
+            V : Float := Variation (Field_Position);
+            S : Float := Step      (Field_Position);
             P : Point_Record;
          begin
 
-            if    D > 2.500 then
+            if Wait_For_Stable_Position then
 
-               P := Maps.Position_To_Map (Data.Position);
+               if V < 0.5 and S < Distance_Threshol then
 
-               Trajectory.Move_To (Float (P.Get_X),
-                                   Float (P.Get_Y));
+                  Wait_For_Stable_Position := False;
 
-               Last_Position := Data.Position;
+                  P := Maps.Position_To_Map (Data.Position);
 
-               Point_Pending := True;
+                  Trajectory.Move_To (Float (P.Get_X),
+                                      Float (P.Get_Y));
 
-            elsif D > 0.200  then
+                  Last_Position := Data.Position;
 
-               P := Maps.Position_To_Map (Data.Position);
+               end if;
 
-               Trajectory.Line_To (Float (P.Get_X),
-                                   Float (P.Get_Y));
+            elsif D > Distance_Threshol then
 
-               Last_Position := Data.Position;
+               if V > 0.8 or S > Distance_Threshol then
 
-               Point_Pending := True;
+                  Wait_For_Stable_Position := True;
+
+               else
+
+                  P := Maps.Position_To_Map (Data.Position);
+
+                  Trajectory.Line_To (Float (P.Get_X),
+                                      Float (P.Get_Y));
+
+                  Last_Position := Data.Position;
+
+                  Point_Pending := True;
+
+               end if;
 
             end if;
 

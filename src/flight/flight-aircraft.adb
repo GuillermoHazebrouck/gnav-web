@@ -34,6 +34,7 @@ use  Utility.Units;
 with Utility.Requests;
 use  Utility.Requests;
 with Utility.Resources;
+with Utility.Storage;
 with Timing.Events;
 
 --//////////////////////////////////////////////////////////////////////////////
@@ -41,11 +42,6 @@ with Timing.Events;
 --//////////////////////////////////////////////////////////////////////////////
 package body Flight.Aircraft is
       
-   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   -- Indicates if the data has been modified (it will be saved if so)
-   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   Setup_Modified : Boolean := False;
-   
    --===========================================================================
    -- Loads the last saved setup
    --===========================================================================
@@ -56,7 +52,7 @@ package body Flight.Aircraft is
             
       Recalculate_Mass;
       
-      Setup_Modified := False;
+      Modified := False;
 
    end Read_Setup;
    -----------------------------------------------------------------------------  
@@ -81,18 +77,22 @@ package body Flight.Aircraft is
    --===========================================================================
    -- (See specification file)
    --===========================================================================
-   procedure Save_If_Modified is
+   procedure Save_Configuration is
    begin
 
-      if Setup_Modified then
+      if Modified then
 
+         Utility.Log.Put_Message ("saving aircraft");
+         
+         Utility.Storage.Set_Item ("AIRCRAFT", Utility.Strings.Trim (This_Aircraft.Registration));
+      
          Write_Aircraft_Setup;
 
-         Setup_Modified := False;
+         Modified := False;
 
       end if;
 
-   end Save_If_Modified;
+   end Save_Configuration;
    -----------------------------------------------------------------------------
    
    
@@ -235,12 +235,12 @@ package body Flight.Aircraft is
       
    begin
       
-      if 
+      if
         This_Aircraft.Total_Mass > 0.0 and then
         This_Aircraft.Area       > 0.0 and then
         This_Aircraft.Cl_Max     > 0.0
       then
-               
+         
          This_Aircraft.V_S0 := Sqrt (16.0 * This_Aircraft.Total_Mass / This_Aircraft.Area / This_Aircraft.Cl_Max);
       
       end if;
@@ -308,8 +308,6 @@ package body Flight.Aircraft is
       Recalculate_Stall_Speed;
       
       Utility.Log.Put_Message ("total mass:" & Float'Image (This_Aircraft.Total_Mass));
-
-      Setup_Modified := True;
       
    end Recalculate_Mass;
    -----------------------------------------------------------------------------
@@ -331,7 +329,7 @@ package body Flight.Aircraft is
       
       if not S.Is_Empty then
          
-         N := S.Read_Natural;
+         N := Natural'Min (S.Read_Natural, Aircraft_Range'Last);
          
          for I in 1..N loop
             
@@ -408,7 +406,37 @@ package body Flight.Aircraft is
          
       end loop;
       
+      -- Select one aircraft
+      --------------------------------------------------------------------------
       This_Aircraft := Aircrafts (Aircrafts'First)'Access;
+      
+      declare         
+         Stored_Value : String := Utility.Storage.Get_Item ("AIRCRAFT");
+         Registration : Aircraft_Names;
+      begin
+         
+         Utility.Log.Put_Message ("last aircraft: " & Stored_Value);
+         
+         Utility.Strings.Override (Registration, Stored_Value);
+         
+         for I in Aircraft_Range loop
+         
+            if 
+              Aircrafts (I).Valid and then
+              Aircrafts (I).Registration = Registration 
+            then       
+            
+               This_Aircraft := Aircrafts (I)'Access;
+            
+               exit;
+            
+            end if;
+         
+         end loop;
+         
+      end;
+            
+      --------------------------------------------------------------------------
       
       Read_Setup;
       
@@ -869,7 +897,7 @@ package body Flight.Aircraft is
       
       Changed : Boolean := False;
       
-      Radius : constant Float := 0.025;
+      Radius : constant Float := 0.2; -- 200m
       
       Wind_Delta : constant Long_Float := Math.Pi / 36.0;
       
@@ -910,8 +938,6 @@ package body Flight.Aircraft is
       --------------------------------------------------------------------------
              
       if Maps.Distance (Flight.Data.Position, Range_Cone.Center) > Radius then
-         
-         Utility.Log.Put_Message ("update cone center:" & Image (Range_Cone.Center));
          
          Range_Cone.Center := Flight.Data.Position;
            
@@ -983,9 +1009,6 @@ package body Flight.Aircraft is
       
       Timing.Events.Register_Timer (1.0, Update_Cone'Access);
       
-      Timing.Events.Register_Timer (Timer    => 5.0,
-                                    Callback => Save_If_Modified'Access);
-
    end Initialize;
    -----------------------------------------------------------------------------
       
@@ -1040,8 +1063,6 @@ package body Flight.Aircraft is
          
          Calculate_Gliding_States;
          
-         Setup_Modified := True;
-      
       end if;
       
    end Next_Aircraft;

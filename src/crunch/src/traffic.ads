@@ -17,28 +17,25 @@
 -- You should have received a copy of the GNU General Public License
 -- along with G-NAV.  If not, see <https://www.gnu.org/licenses/>.
 --------------------------------------------------------------------------------
-with Utility.Calendar;
-use  Utility.Calendar;
-with Maps;
-use  Maps;
 
---******************************************************************************
---
---******************************************************************************
-package Gnav_Info is
+-- Depencencies
+--//////////////////////////////////////////////////////////////////////////////
+with Utility.Maps;
+use  Utility.Maps;
 
-   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   -- G-NAV system data
-   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   Core_Version    : String (1..2)  := "1A";
-   Service_Version : String (1..4)  := (others => ' ');
-   Service_Name    : String (1..12) := (others => ' ');
-   Startup_Time    : Times := No_Time;
-   Home_Position   : Position_Record := No_Position_Record;
-   Home_Name       : String (1..4)  := "HOME";
-   Utc_Offst       : Lapses  := No_Lapse;
-   Request_Metar   : Boolean := True;
-   Request_Traffic : Boolean := True;
-
-end Gnav_Info;
+--//////////////////////////////////////////////////////////////////////////////
+-- This package provides an UDP listener to parse OGN tracks
+--//////////////////////////////////////////////////////////////////////////////
+package Traffic is
+   
+   Reference   : Position_Record := (51.0, 4.0);
+   
+   Limits      : Position_Record := ( 2.0, 4.0);
+   
+   --===========================================================================
+   -- Reads the aircraft data from the data file 'data/aircraft.dat'
+   --===========================================================================
+   procedure Start_Tracker;
+   
+end Traffic;
 --------------------------------------------------------------------------------

@@ -364,7 +364,13 @@ package body Display.Menu is
       
          if Active_Page = Page_Glider then
             
+            Flight.Aircraft.Save_Configuration;
+            
             Flight.Aircraft.Calculate_Gliding_States;
+            
+         elsif Active_Page = Page_Route then
+            
+            Flight.Plan.Save_Configuration;
             
          end if;
                   

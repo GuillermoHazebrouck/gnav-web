@@ -17,28 +17,22 @@
 -- You should have received a copy of the GNU General Public License
 -- along with G-NAV.  If not, see <https://www.gnu.org/licenses/>.
 --------------------------------------------------------------------------------
-with Utility.Calendar;
-use  Utility.Calendar;
-with Maps;
-use  Maps;
 
---******************************************************************************
---
---******************************************************************************
-package Gnav_Info is
 
-   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   -- G-NAV system data
-   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   Core_Version    : String (1..2)  := "1A";
-   Service_Version : String (1..4)  := (others => ' ');
-   Service_Name    : String (1..12) := (others => ' ');
-   Startup_Time    : Times := No_Time;
-   Home_Position   : Position_Record := No_Position_Record;
-   Home_Name       : String (1..4)  := "HOME";
-   Utc_Offst       : Lapses  := No_Lapse;
-   Request_Metar   : Boolean := True;
-   Request_Traffic : Boolean := True;
+--//////////////////////////////////////////////////////////////////////////////
+-- This package uses the local storage to retrive user data
+--//////////////////////////////////////////////////////////////////////////////
+package Utility.Storage is
 
-end Gnav_Info;
+   --===========================================================================
+   -- Stores the provided value under the given key
+   --===========================================================================
+   procedure Set_Item (Key, Value : String);
+
+   --===========================================================================
+   -- Stores the provided value under the given key
+   --===========================================================================
+   function Get_Item (Key : String) return String;
+
+end Utility.Storage;
 --------------------------------------------------------------------------------

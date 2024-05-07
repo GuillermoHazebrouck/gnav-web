@@ -653,7 +653,16 @@ export let imports = {
     let d = new Uint8Array(instance.exports.memory.buffer, address, length);
     let s = new Uint8Array(__adawebpack_o2i.too(identifier).data, offset, length);
     d.set(s);
+  },
+
+  __adawebpack__storage__setItem: function(key_address, key_size, value_address, value_size) {
+    window.localStorage.setItem(string_to_js(key_address, key_size), string_to_js(value_address, value_size));
+  },
+
+  __adawebpack__storage__getItem: function(key_address, key_size) {
+    return string_to_wasm(window.localStorage.getItem(string_to_js(key_address, key_size)));
   }
+
 
 };
 

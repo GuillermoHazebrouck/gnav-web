@@ -186,6 +186,16 @@ package Flight is
    function Straight_Flight return Boolean;
    
    --===========================================================================
+   -- Returns the variation of the variable in the last three steps
+   --===========================================================================
+   function Variation (Field : Data_Field_Kind) return Float;
+   
+   --===========================================================================
+   -- Returns the last steps
+   --===========================================================================
+   function Step (Field : Data_Field_Kind) return Float;
+   
+   --===========================================================================
    -- Event triggered when the data is cached
    --===========================================================================
    On_Data_Cached : Utility.Events.Event_Stack;

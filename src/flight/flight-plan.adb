@@ -30,6 +30,7 @@ with Maps.Terrain;
 with Timing.Events;
 with Utility;
 with Utility.Log;
+with Utility.Storage;
 with Utility.Strings;
 use  Utility.Strings;
 
@@ -66,13 +67,10 @@ package body Flight.Plan is
          null;
       end if;
 
-      Read_Flight_Plans;
+      Load_Configuration;
 
       Timing.Events.Register_Timer (Timer    => Timing.Time_Delta,
                                     Callback => Update_Flight_Plan'Access);
-
-      Timing.Events.Register_Timer (Timer    => 5.0,
-                                    Callback => Save_If_Modified'Access);
 
       Maps.Terrain.On_Loaded.Connect (Recompute_All_Tasks'Access);
 
@@ -232,14 +230,122 @@ package body Flight.Plan is
    --===========================================================================
    -- (See specification file)
    --===========================================================================
-   procedure Read_Flight_Plans is
+   procedure Load_Configuration is
+
+      P      : Natural := 0;
+      Buffer : Utility.Strings.String_Buffer (150);
+      Index  : Integer;
+
    begin
 
-      -- TODO: read flight plans from local storage
+      -- List of flight plans
+      --------------------------------------------------------------------------
+
+      for Plan of Flight_Plans loop
+
+         P := P + 1;
+
+         Buffer.Load (Utility.Storage.Get_Item ("PLAN" & Integer_Image (P)));
+
+         declare
+            Name : String := Trim (Buffer.Read_Next (':'));
+         begin
+
+            if Name /= "" and then Name /= "EMPTY" then
+
+               Plan.Initialize;
+
+               Override (Plan.Name, Name);
+
+               for Waypoint of Plan.Waypoints loop
+
+                  declare
+                     Value   : String := Buffer.Read_Next (':');
+                  begin
+
+                     for C in Value'Range loop
+
+                        if Value (C) = '>' then
+
+                           if C > Value'First and C < Value'Last then
+
+                              Override (Waypoint.Name, Value (Value'First..C-1));
+
+                              Waypoint.Position  := Maps.Value (Value (C+1..Value'Last));
+
+                              Waypoint.Is_Loaded := True;
+
+                           end if;
+
+                           exit;
+
+                        end if;
+
+                     end loop;
+
+                  end;
+
+               end loop;
+
+            end if;
+
+         end;
+
+      end loop;
+
+      -- Active flight plan
+      --------------------------------------------------------------------------
+      Index := Integer_Value (Utility.Storage.Get_Item ("PLAN"), Flight_Plan_Range'First);
+
+      if Index in Flight_Plan_Range'Range then
+
+         Active_Flight_Plan := Flight_Plan_Range (Index);
+
+         -- If not loaded (due to erroneous data, take first loaded)
+         -----------------------------------------------------------------------
+         if not Flight_Plan.Is_Loaded then
+
+            for P in Flight_Plan_Range loop
+
+               if Flight_Plans (P).Is_Loaded then
+
+                  Active_Flight_Plan := P;
+
+               end if;
+
+            end loop;
+
+         end if;
+
+      end if;
+
+      -- Only in case nothing could be loaded: initialize first
+      --------------------------------------------------------------------------
+      if not Flight_Plan.Is_Loaded then
+
+         Active_Flight_Plan := Flight_Plan_Range'First;
+
+         Flight_Plan.Initialize;
+
+      end if;
+
+      -- Active waypoint
+      --------------------------------------------------------------------------
+
+      Index := Integer_Value (Utility.Storage.Get_Item ("WAYPOINT"), Flight_Plan_Range'First);
+
+      if Index in Waypoint_Range then
+
+         Flight_Plan.Target := Waypoint_Range (Index);
+
+      end if;
+
+      -- Refresh data
+      --------------------------------------------------------------------------
 
       Recompute_All_Tasks;
 
-   end Read_Flight_Plans;
+   end Load_Configuration;
    -----------------------------------------------------------------------------
 
 
@@ -248,32 +354,63 @@ package body Flight.Plan is
    --===========================================================================
    -- (See specification file)
    --===========================================================================
-   procedure Write_Flight_Plans is
-   begin
+   procedure Save_Configuration is
 
-      null;
+      P : Natural := 0;
 
-   end Write_Flight_Plans;
-   -----------------------------------------------------------------------------
-
-
-
-
-   --===========================================================================
-   -- (See specification file)
-   --===========================================================================
-   procedure Save_If_Modified is
    begin
 
       if Modified then
 
-         Write_Flight_Plans;
+         for Plan of Flight_Plans loop
+
+            P := P + 1;
+
+            if Plan.Is_Loaded then
+
+               declare
+                  Buffer : Utility.Strings.String_Buffer (150);
+               begin
+
+                  Buffer.Append (Trim (Plan.Name));
+
+                  for Waypoint of Plan.Waypoints loop
+
+                     if Waypoint.Is_Loaded then
+
+                        Buffer.Append (":");
+                        Buffer.Append (Trim (Waypoint.Name));
+                        Buffer.Append (">");
+                        Buffer.Append (Image (Waypoint.Position));
+
+                     end if;
+
+                  end loop;
+
+                  Utility.Storage.Set_Item ("PLAN" & Integer_Image (P), Buffer.Get_Content);
+
+               end;
+
+            else
+
+               Utility.Storage.Set_Item ("PLAN" & Integer_Image (P), "EMPTY");
+
+            end if;
+
+         end loop;
+
+         -- Current state
+         -----------------------------------------------------------------------
+
+         Utility.Storage.Set_Item ("PLAN",     Integer_Image (Active_Flight_Plan));
+
+         Utility.Storage.Set_Item ("WAYPOINT", Integer_Image (Flight_Plan.Target));
 
          Modified := False;
 
       end if;
 
-   end Save_If_Modified;
+   end Save_Configuration;
    -----------------------------------------------------------------------------
 
 
@@ -421,8 +558,6 @@ package body Flight.Plan is
 
          F := F + 1;
 
-         Modified := True;
-
          return True;
 
       end if;
@@ -447,8 +582,6 @@ package body Flight.Plan is
       if F > Flight_Plan_Range'First then
 
          F := F - 1;
-
-         Modified := True;
 
          return True;
 
@@ -635,8 +768,6 @@ package body Flight.Plan is
 
             Active_Flight_Plan := F;
 
-            Modified := True;
-
             return True;
 
          end if;
@@ -696,8 +827,6 @@ package body Flight.Plan is
             end loop;
 
          end if;
-
-         Modified := True;
 
          return True;
 
@@ -773,8 +902,6 @@ package body Flight.Plan is
 
          Flight_Plan.Recompute_Tasks;
 
-         Modified := True;
-
          return True;
 
       end if;
@@ -830,8 +957,6 @@ package body Flight.Plan is
 
          Flight_Plan.Recompute_Tasks;
 
-         Modified := True;
-
          return True;
 
       end if;
@@ -874,8 +999,6 @@ package body Flight.Plan is
          Override (Flight_Plan.Waypoints (W).Name, "WPT");
 
          Flight_Plan.Recompute_Tasks;
-
-         Modified := True;
 
          return True;
 

@@ -51,6 +51,7 @@ with Maps.Reference;
 with Maps.Terrain.Loader;
 with Maps.Layers;
 with Math;
+with Math.Vector2;
 with Display.Menu;
 with Utility.Log;
 
@@ -60,9 +61,9 @@ with Utility.Log;
 --******************************************************************************
 package body Gnav is
 
-
    --===========================================================================
-   --
+   -- Reads the service-info section of the document to extract the
+   -- configuration parameters.
    --===========================================================================
    procedure Load_Service_Data is
 
@@ -73,42 +74,75 @@ package body Gnav is
       Reader_Value : String_Buffer (100);
 
    begin
+
       Utility.Log.Put_Message ("loading service information");
+
       Reader_Data.Load (To_String (To_Wide_Wide_String (Web.Window.Document.Get_Element_By_Id (
                         To_Web_String ("service-info")).As_HTML_Script.Get_Text)));
 
-      for I in 1..4 loop
+      --------------------------------------------------------------------------
+      -- IMPORTANT: do not forget to increase the counter when adding new fields
+      --------------------------------------------------------------------------
+
+      for I in 1..10 loop
+
          Reader_Value.Load (Trim (Reader_Data.Read_Next (';')));
+
          declare
             Key : String := Reader_Value.Read_Next ('=');
             Val : String := Reader_Value.Read_Next ('=');
          begin
+
+            --------------------------------------------------------------------
             if Key = "LOCATION" then
+
                Utility.Log.Put_Message ("startup location set to " & Val);
+
                Maps.Set_Reference (Maps.Value (Val));
+
                Gnav_Info.Home_Position := Maps.Value (Val);
+
                Flight.Data.Position    := Gnav_Info.Home_Position;
+
                -- TODO: it is more logic to initialize all positions with Home_Location
+
+            --------------------------------------------------------------------
             elsif Key = "HOME" then
+
                Override (Gnav_Info.Home_Name, Val);
+
+            --------------------------------------------------------------------
             elsif Key = "NAME" then
+
                Override (Gnav_Info.Service_Name, Val);
+
+            --------------------------------------------------------------------
             elsif Key = "VERSION" then
+
                Override (Gnav_Info.Service_Version, Val);
+
+            --------------------------------------------------------------------
             elsif Key = "TRAFFIC" then
+
                if Val = "TRUE" then
                   Gnav_Info.Request_Traffic := True;
                else
                   Gnav_Info.Request_Traffic := False;
                end if;
+
+            --------------------------------------------------------------------
             elsif Key = "METAR" then
+
                if Val = "TRUE" then
                   Gnav_Info.Request_Metar := True;
                else
                   Gnav_Info.Request_Metar := False;
                end if;
+
             end if;
+
          end;
+
       end loop;
 
    end Load_Service_Data;
@@ -149,6 +183,17 @@ package body Gnav is
             Color     => Glex.Colors.Line_Cyan,
             Alignment => Glex.Fonts.Alignment_CC);
 
+         S.Height    := 0.040;
+         S.Space     := 0.035;
+         S.Width     := 0.015;
+         Glex.Fonts.Draw
+           ("VERSION " & Gnav_Info.Core_Version,
+            X         => 0.5,
+            Y         => 0.1,
+            Style     => S,
+            Color     => Glex.Colors.Line_Purple,
+            Alignment => Glex.Fonts.Alignment_CC);
+
       end;
 
       Load_Service_Data;
@@ -170,7 +215,8 @@ package body Gnav is
    -----------------------------------------------------------------------------
 
 
-
+   -- A : Long_Float := 0.0;
+   -- T : Long_Float := 0.0;
    --===========================================================================
    -- (See specification file)
    --===========================================================================
@@ -182,6 +228,33 @@ package body Gnav is
    begin
 
       Utility.Calendar.Cache_Time (E + L);
+
+      -- Simulate a trajectory for development (1 second lapses)
+      --------------------------------------------------------------------------
+      -- declare
+      --    use Interfaces;
+      --    use Math.Vector2;
+      --    P : Maps.Position_Record := Flight.Data.Position;
+      --    D : Long_Float := 0.2; -- km
+      --    R : Vector2_Record := New_Vector2_Record (0.5 * D, 0.0); -- km
+      --    V : Long_Float := 0.025; -- km/s
+      --    W : Vector2_Record := New_Vector2_Record (0.001, 0.003);
+      -- begin
+      --
+      --    A := A + V / (0.5 * D);
+      --    R.Rotate (A);
+      --
+      --    P := Maps.Position (Gnav_Info.Home_Position, R + T * W);
+      --
+      --    Gnav_Set_Gnss_Data (Lat => IEEE_Float_64 (P.Lat + 0.001),
+      --                        Lon => IEEE_Float_64 (P.Lon + 0.001),
+      --                        Alt => IEEE_Float_64 (300.0 + T),
+      --                        Spd => IEEE_Float_64 (1000.0 * V),
+      --                        Crs => IEEE_Float_64 (20.0));
+      --    T := T + 1.0;
+      --
+      -- end;
+      --------------------------------------------------------------------------
 
    end Gnav_Cache_Time;
    -----------------------------------------------------------------------------
@@ -245,10 +318,6 @@ package body Gnav is
       Timing.Events.Tick;
 
       Display.Blink := not Display.Blink;
-
-      --Flight.Data.Course := 30.0;
-      --Flight.Data.Ages   (Field_Course) := Cached_Time;
-      --Flight.Data.Origin (Field_Course) := Origin_External;
 
    end Gnav_Process_Timer;
    -----------------------------------------------------------------------------

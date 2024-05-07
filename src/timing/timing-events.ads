@@ -108,7 +108,7 @@ private
                                                Counter  => 0.0,
                                                Callback => null);
    
-   Timer_Stack : array (1..20) of aliased Timer_Record := (others => No_Timed_Record);
+   Timer_Stack : array (1..25) of aliased Timer_Record := (others => No_Timed_Record);
    
    Finalization_Stack : array (1..20) of Timed_Procedure := (others => null);
    

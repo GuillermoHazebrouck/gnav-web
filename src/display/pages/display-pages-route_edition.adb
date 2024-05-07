@@ -794,6 +794,8 @@ package body Display.Pages.Route_Edition is
 
                      Refresh_Data;
 
+                     Flight.Plan.Modified := True;
+
                      Refresh := True;
 
                   end if;
@@ -803,6 +805,8 @@ package body Display.Pages.Route_Edition is
                   if Flight.Plan.Remove_Flight_Plan then
 
                      Refresh_Data;
+
+                     Flight.Plan.Modified := True;
 
                      Refresh := True;
 
@@ -849,12 +853,16 @@ package body Display.Pages.Route_Edition is
             Utility.Strings.Override (Flight_Plan.Name, Widgets.Keyboard.Get_Text);
             Text_Focus.Set_Label (Utility.Strings.Trim (Flight_Plan.Name));
 
+            Flight.Plan.Modified := True;
+
          elsif
            Text_Focus = Ent_Waypoint_Access
          then
 
             Utility.Strings.Override (Next_Waypoint.Name, Widgets.Keyboard.Get_Text);
             Text_Focus.Set_Label (Utility.Strings.Trim (Next_Waypoint.Name));
+
+            Flight.Plan.Modified := True;
 
          end if;
 
@@ -1091,6 +1099,8 @@ package body Display.Pages.Route_Edition is
 
             Refresh_Data;
 
+            Flight.Plan.Modified := True;
+
             Refresh := True;
 
          end if;
@@ -1102,6 +1112,8 @@ package body Display.Pages.Route_Edition is
          if Flight.Plan.Prepend_Waypoint then
 
             Refresh_Data;
+
+            Flight.Plan.Modified := True;
 
             Refresh := True;
 
@@ -1115,6 +1127,8 @@ package body Display.Pages.Route_Edition is
 
             Refresh_Data;
 
+            Flight.Plan.Modified := True;
+
             Refresh := True;
 
          end if;
@@ -1127,6 +1141,8 @@ package body Display.Pages.Route_Edition is
 
             Refresh_Data;
 
+            Flight.Plan.Modified := True;
+
             Refresh := True;
 
          end if;
@@ -1138,6 +1154,8 @@ package body Display.Pages.Route_Edition is
          if Flight.Plan.Append_Flight_Plan then
 
             Refresh_Data;
+
+            Flight.Plan.Modified := True;
 
             Refresh := True;
 
