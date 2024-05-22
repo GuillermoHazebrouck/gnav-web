@@ -332,7 +332,6 @@ package body Flight.Representation is
    procedure Draw_Route (View : Map_View_Record) is
 
       use Glex.Colors;
-      use Glex.Fonts;
       use Utility.Strings;
 
       Point  : Point_Record;
@@ -378,14 +377,13 @@ package body Flight.Representation is
       use Glex.Fonts;
       use Utility.Strings;
 
-      Line   : Line_Color_Record;
-      Point  : Point_Record;
-      X, Y   : Float;
-      Font   : Font_Style_Record := (Width     => 0.008,
-                                     Height    => 0.022,
-                                     Space     => 0.005,
-                                     Rendering => Glex.Fonts.Font_Glow,
-                                     Thickness => Glex.Fonts.Font_Bold);
+      Line : Line_Color_Record;
+      X, Y : Float;
+      Font : Font_Style_Record := (Width     => 0.008,
+                                   Height    => 0.022,
+                                   Space     => 0.005,
+                                   Rendering => Glex.Fonts.Font_Glow,
+                                   Thickness => Glex.Fonts.Font_Bold);
 
    begin
 
@@ -434,7 +432,8 @@ package body Flight.Representation is
                             Position : Position_Record;
                             Course   : Float;
                             Color    : Color_Record := Color_White;
-                            Shadow   : Color_Record := Color_Black) is
+                            Shadow   : Color_Record := Color_Black;
+                            Size     : Float := 0.07) is
 
       use Ada.Numerics;
 
@@ -442,7 +441,6 @@ package body Flight.Representation is
       Transform : Glex.Transform_Record := Glex.Get_Transform.all;
       X, Y      : Float;
       Angle     : Float := Course;
-      Size      : constant Float := 0.07;
 
    begin
 
@@ -486,34 +484,77 @@ package body Flight.Representation is
    procedure Draw_Traffic (View : Map_View_Record) is
 
       use Flight.Traffic;
+      use Glex.Fonts;
+      use Utility.Strings;
+
+      X, Y  : Float;
+      Line  : Line_Color_Record;
+      Font  : Font_Style_Record := (Width     => 0.007,
+                                    Height    => 0.020,
+                                    Space     => 0.004,
+                                    Rendering => Glex.Fonts.Font_Glow,
+                                    Thickness => Glex.Fonts.Font_Regular);
 
       Color : Color_Record;
 
    begin
 
-      for T in Traffic_Data'Range loop
+      Maintain_Tracks;
 
-         if Traffic_Data (T).Active then
+      if Flight.Traffic.Get_Status = Aprs_Nominal then
 
-            if Traffic_Data (T).Coasted then
+         for T in Traffic_Data'Range loop
 
-               Color := Color_White;
+            if Traffic_Data (T).Active then
 
-            else
+               if Traffic_Data (T).Coasted then
 
-               Color := Color_Reddish;
+                  Color := Color_Pink;
+
+               else
+
+                  Color := Color_Yellow;
+
+               end if;
+
+               Draw_Airplane (View,
+                              Traffic_Data (T).Position,
+                              Traffic_Data (T).Course,
+                              Color_Black,
+                              Color,
+                              0.04);
+
+               View.Position_To_Screen (Traffic_Data (T).Position, X, Y);
+
+               Glex.Fonts.Draw (Integer_Image (Traffic_Data (T).Altitude),
+                                X,
+                                Y - 0.080,
+                                Font,
+                                Line_White,
+                                Alignment_CC);
+
+               if abs Traffic_Data (T).Vario > 0.05 then
+
+                  if Traffic_Data (T).Vario > 0.0 then
+                     Line := Line_Green;
+                  else
+                     Line := Line_Red;
+                  end if;
+
+                  Glex.Fonts.Draw (Float_Image (Traffic_Data (T).Vario, 1),
+                                   X,
+                                   Y + 0.080,
+                                   Font,
+                                   Line,
+                                   Alignment_CC);
+
+               end if;
 
             end if;
 
-            Draw_Airplane (View,
-                           Traffic_Data (T).Position,
-                           Traffic_Data (T).Course,
-                           Color,
-                           Color_Gray_4);
+         end loop;
 
-         end if;
-
-      end loop;
+      end if;
 
    end Draw_Traffic;
    -----------------------------------------------------------------------------

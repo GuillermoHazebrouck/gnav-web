@@ -447,7 +447,7 @@ package body Display.Pages.Wind is
       
       use Math.Vector2;
       
-      Step   : constant Long_Float := 5.0 / 3.6;
+      Step   : constant Long_Float := 1.0 / 3.6;
       Wind   : Vector2_Record := Flight.Data.Wind;
       Norm   : Long_Float     := Flight.Data.Wind.Norm2;    
       Aspect : Long_Float     := Long_Float (Glex.Aspect);

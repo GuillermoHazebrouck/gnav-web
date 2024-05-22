@@ -36,7 +36,7 @@ package Utility.Resources is
    type Binary_Response_Handler is access procedure (Reader : in out Stream_Reader_Type);
 
    --===========================================================================
-   -- Registers an asynchrounous request in the queue. The request is sent
+   -- Registers an asynchrounous request in a FIFO queue. The request is sent
    -- as soon as all previous request have been handled.
    --===========================================================================
    procedure Request_Binary_Resource (Name : String; Handler : Binary_Response_Handler; Timeout : Natural := 0);

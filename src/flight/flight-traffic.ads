@@ -36,10 +36,29 @@ package Flight.Traffic is
    procedure Initialize;
     
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   -- Indicates if the request are sent
+   -- This open variable can be used to control the emission of peridic requests
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
-   Active : Boolean := True;
+   Enabled : Boolean := True;
    
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   --
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   type Aprs_Status is (Aprs_Disabled, 
+                        Aprs_Not_Receiving,
+                        Aprs_Not_Reporting,
+                        Aprs_Nominal);
+   
+   --===========================================================================
+   -- Indicates the status of the APRS
+   --===========================================================================
+   function Get_Status return Aprs_Status;
+   
+   --===========================================================================
+   -- > Marks the tracks older than 6 seconds as coasted.
+   -- > Disables the tracks that are obsolete.
+   --===========================================================================
+   procedure Maintain_Tracks;
+
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    --
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -50,16 +69,6 @@ package Flight.Traffic is
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    No_Traffic_Id : constant Traffic_Id := (others => ' ');
    
-   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   --
-   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   type Alarm_Level is new Natural range 0..3;
-   
-   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   --
-   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   No_Alarm : constant Alarm_Level := 0;
-      
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    -- Different kind of traffic (based on FLARM ICD)
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -77,47 +86,53 @@ package Flight.Traffic is
                          Airship,
                          Unmanned,
                          Obstacle);                         
-   
+
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    -- Represents a traffic object.
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   type Traffic_Record is record
+   type Traffic_Record is tagged record
    
-      Active     : Boolean;
+      Active        : Boolean;
       
-      Time_Stamp : Times;
+      Time_Stamp    : Times;
       
-      Id         : Traffic_Id;
+      Last_Integral : Times;
       
-      Position   : Position_Record;
+      Id            : Natural;
       
-      Altitude   : Float;
+      Position      : Position_Record;
+
+      Altitude      : Natural;
       
-      Speed      : Float;
+      Speed         : Float;
       
-      Climb_Rate : Float;
+      Vario         : Float;
       
-      Course     : Float;
+      Course        : Float;
       
-      No_Track   : Boolean;
+      Rotation      : Float;
       
-      Coasted    : Boolean;
+      No_Track      : Boolean;
+      
+      Coasted       : Boolean;
       
    end record;
-         
+   
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    -- The default value
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++   
-   No_Traffic_Record : constant Traffic_Record := (Active     => False,      
-                                                   Time_Stamp => No_Time,      
-                                                   Id         => No_Traffic_Id,      
-                                                   Position   => No_Position_Record,      
-                                                   Altitude   => 0.0,      
-                                                   Speed      => 0.0,      
-                                                   Climb_Rate => 0.0,      
-                                                   Course     => 0.0,      
-                                                   No_Track   => False,
-                                                   Coasted    => False);
+   No_Traffic_Record : constant Traffic_Record := (Active        => False,      
+                                                   Time_Stamp    => No_Time,      
+                                                   Last_Integral => No_Time,  
+                                                   Id            => 0,      
+                                                   Position      => No_Position_Record, 
+                                                   Altitude      => 0,      
+                                                   Speed         => 0.0,      
+                                                   Vario         => 0.0,      
+                                                   Course        => 0.0, 
+                                                   Rotation      => 0.0,
+                                                   No_Track      => False,
+                                                   Coasted       => False);
         
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    -- Contains the traffic objects

@@ -36,6 +36,8 @@ with Utility.Requests;
 use  Utility.Requests;
 with Utility.Resources;
 with Utility.Strings;
+with Math.Vector2;
+use  Math.Vector2;
 
 
 --//////////////////////////////////////////////////////////////////////////////
@@ -66,7 +68,7 @@ package body Flight.Traffic is
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    --
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   Request_Period : Duration := 8.0;
+   Request_Period : Duration := 6.0;
 
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    -- This must be shorter than the request period
@@ -81,12 +83,53 @@ package body Flight.Traffic is
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    --
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   Last_Request : Times := No_Time;
+   Last_Track : Times := No_Time;
 
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   -- Standard Unix epoch
+   --
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   Epoch : constant Times := Time_Of (1970, 1, 1, 0.0);
+   Obsolence : constant Lapses := Lapse_Of (30.0);
+
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   --
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   Coasting  : constant Lapses := Lapse_Of (10.0);
+
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   --
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   Rad : constant float := Float (Math.Pi / 180.0);
+
+
+
+
+   --===========================================================================
+   -- (See specification file)
+   --===========================================================================
+   function Get_Status return Aprs_Status is
+   begin
+
+      if Gnav_Info.Request_Traffic and Enabled then
+         if Last_Update = No_Time or Last_Track = No_Time then
+            return Aprs_Not_Receiving;
+         else
+            if (Cached_Time - Last_Update) > Obsolence then
+               return Aprs_Not_Receiving;
+            elsif (Cached_Time - Last_Track) > Obsolence then
+               return Aprs_Not_Reporting;
+            else
+               return Aprs_Nominal;
+            end if;
+         end if;
+      else
+         return Aprs_Disabled;
+      end if;
+
+   end Get_Status;
+   -----------------------------------------------------------------------------
+
+
+
 
    --===========================================================================
    --
@@ -100,56 +143,75 @@ package body Flight.Traffic is
 
          declare
             use Utility.Strings;
-            L        : Long_Float;
-            T        : Times := No_Time;
-            N        : Short_Natural;
-            Id       : Traffic_Id;
+            T        : Natural;
+            R        : Position_Record;
+            N        : Natural;
+            Id       : Natural;
             Lat      : Float;
             Lon      : Float;
-            Age      : Float;
+            Age      : Short_Short_Integer;
             Altitude : Short_Natural;
             Speed    : Short_Short_Natural;
             Course   : Short_Short_Natural;
-            A        : Natural := 0;
+            Vario    : Short_Short_Integer;
+            Rotation : Short_Short_Integer;
+            Last     : Short_Short_Integer := Short_Short_Integer'First;
          begin
 
-            L := S.Read_Long_Float;
-            T := Epoch + Long_Lapse_Of (L);
-            N := S.Read_Short_Natural;
+            T     := S.Read_Natural;
+            R.Lat := S.Read_Long_Float;
+            R.Lon := S.Read_Long_Float;
+
+            N := Natural (S.Read_Short_Short_Natural);
+            if N > Traffic_Data'Last then
+               N := Traffic_Data'Last;
+            end if;
+
+            Utility.Log.Put_Message ("#" & Natural'Image (N));
 
             for I in 1..N loop
 
-               Override (Id, S.Read_String (6));
-
-               Age      := S.Read_Float;
+               Id       := S.Read_Natural;
+               Age      := S.Read_Short_Short_Integer;
                Lat      := S.Read_Float;
                Lon      := S.Read_Float;
                Altitude := S.Read_Short_Natural;
                Speed    := S.Read_Short_Short_Natural;
                Course   := S.Read_Short_Short_Natural;
+               Vario    := S.Read_Short_Short_Integer;
+               Rotation := S.Read_Short_Short_Integer;
 
-               for I in Traffic_Data'Range loop
-                  if Traffic_Data (I).Id = Id then
-                     A := I;
-                     exit;
-                  elsif A = 0 and not Traffic_Data (I).Active then
-                     A := I;
-                  end if;
-               end loop;
+               Traffic_Data (I).Time_Stamp := Cached_Time;
+               Set_Clock (Traffic_Data (I).Time_Stamp, Day_Lapse (T + Integer (Age)));
+               Traffic_Data (I).Last_Integral := Traffic_Data (I).Time_Stamp;
 
-               if A in Traffic_Data'Range then
+               --if (Traffic_Data (I).Time_Stamp - Cache_Time) > No_Lapse then
+               --   Utility.Log.Put_Message ("warning: time track is ahead of clock");
+               --end if;
 
-                  Traffic_Data (A).Time_Stamp   := T + Lapse_Of (Age);
-                  Traffic_Data (A).Position.Lat := Gnav_Info.Home_Position.Lat + Long_Float (Lat);
-                  Traffic_Data (A).Position.Lon := Gnav_Info.Home_Position.Lon + Long_Float (Lon);
-                  Traffic_Data (A).Altitude     := Float (Altitude);
-                  Traffic_Data (A).Speed        := Float (Speed) * 3.6;
-                  Traffic_Data (A).Course       := Float (Course);
-                  Traffic_Data (A).Active       := True;
-                  Traffic_Data (A).Coasted      := False;
+               Traffic_Data (I).Id           := Id;
+               Traffic_Data (I).Position.Lat := R.Lat + Long_Float (Lat);
+               Traffic_Data (I).Position.Lon := R.Lon + Long_Float (Lon);
+               Traffic_Data (I).Altitude     := Natural (Altitude);
+               Traffic_Data (I).Speed        := Float (Speed)    * 2.0; -- km/h
+               Traffic_Data (I).Course       := Float (Course)   * 1.5; -- deg
+               Traffic_Data (I).Vario        := Float (Vario)    * 0.1; -- m/s
+               Traffic_Data (I).Rotation     := Float (Rotation);       -- deg/s
+               Traffic_Data (I).Active       := True;
+               Traffic_Data (I).Coasted      := False;
 
+               -- Keep the most recent time stap to check the system status
+               -----------------------------------------------------------------
+               if Last_Track = No_Time or else Age > Last then
+                  Last := Age;
+                  Last_Track := Traffic_Data (I).Time_Stamp;
                end if;
+               -----------------------------------------------------------------
 
+            end loop;
+
+            for I in N + 1 .. Traffic_Data'Last loop
+               Traffic_Data (I).Active := False;
             end loop;
 
          end;
@@ -223,11 +285,9 @@ package body Flight.Traffic is
    procedure Send_Traffic_Request is
    begin
 
-      if not Active then
+      if not Enabled or not Gnav_Info.Request_Traffic then
          return;
       end if;
-
-      Last_Request := Cached_Time;
 
       Utility.Log.Put_Message ("request traffic");
 
@@ -248,7 +308,6 @@ package body Flight.Traffic is
 
 
 
-   procedure Maintain_Tracks;
 
    --===========================================================================
    --
@@ -260,7 +319,7 @@ package body Flight.Traffic is
 
          Utility.Log.Put_Message ("traffic request enabled");
 
-         Timing.Events.Register_Timer (1.0, Maintain_Tracks'Access);
+       --Timing.Events.Register_Timer (1.0, Maintain_Tracks'Access);
 
          Timing.Events.Register_Timer (Request_Period, Send_Traffic_Request'Access);
 
@@ -276,8 +335,8 @@ package body Flight.Traffic is
 
 
    --===========================================================================
-   -- > Marks the tracks older than 4 seconds as coasted.
-   -- > Removes the tracks that are older than 8 seconds.
+   -- > Marks the tracks older than 6 seconds as coasted.
+   -- > Disables the tracks that are obsolete.
    --===========================================================================
    procedure Maintain_Tracks is
 
@@ -285,19 +344,76 @@ package body Flight.Traffic is
 
    begin
 
-      for T in Traffic_Data'Range loop
+      for Track of Traffic_Data loop
 
-         if Traffic_Data (T).Active then
+         if Track.Active then
 
-            Age := (Cached_Time - Traffic_Data (T).Time_Stamp);
+            -- Integrate position up to the coasting lapse
+            --------------------------------------------------------------------
 
-            if Age > Lapse_Of (10.0) then
+            if not Track.Coasted then
 
-               Traffic_Data (T) := No_Traffic_Record;
+               declare
+                  T : Lapses := Cached_Time - Track.Last_Integral;
+                  V : Vector2_Record;
+                  R : Vector2_Record;
+                  A : Float;
+                  S : Natural;
+               begin
 
-            elsif Age > Lapse_Of (4.0) then
+                  if T > Coasting then
+                     T := Coasting;
+                  elsif T < No_Lapse then
+                     T := No_Lapse;
+                  end if;
 
-               Traffic_Data (T).Coasted := True;
+                  S := Integer (Seconds (T));
+
+                  if S > 0 then
+
+                     V.Set    (0.0, 1.0);
+                     V.Rotate (Long_Float (-Track.Course * Rad));
+                     V.Scale  (Long_Float ( Track.Speed / 3600.0));
+
+                     if Track.Rotation = 0.0 then
+                        V.Scale (Long_Float (S));
+                        Track.Position := Position (Track.Position, V);
+                     else
+                        R.Set (0.0, 0.0);
+                        A := 0.0;
+                        for I in 1..S loop
+                           A := A + Track.Rotation * Float (I) / Float (S); --> TODO: review fading factor
+                           V.Rotate (Long_Float (-A * Rad));
+                           R.Add (V);
+                        end loop;
+                        Track.Course   := Track.Course + A;
+                        Track.Position := Position (Track.Position, R);
+                     end if;
+
+                  end if;
+
+                  Track.Last_Integral := Cached_Time;
+
+               end;
+
+            end if;
+
+            -- Deactivate or coast the track based on its age
+            --------------------------------------------------------------------
+
+            Age := Cached_Time - Track.Time_Stamp;
+
+            if    Age > Obsolence then
+
+               Track.Active  := False;
+
+            elsif Age > Coasting  then
+
+               Track.Coasted := True;
+
+            else
+
+               Track.Coasted := False;
 
             end if;
 

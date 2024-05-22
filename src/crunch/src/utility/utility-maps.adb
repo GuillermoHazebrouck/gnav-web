@@ -182,7 +182,7 @@ package body Utility.Maps is
 
             Result := Result + Long_Float'Value (Image (J..I - 1)) / 3600.0;
 
-            J := I + 1;
+            exit;
 
          end if;
 

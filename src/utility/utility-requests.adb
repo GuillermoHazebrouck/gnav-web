@@ -641,6 +641,32 @@ package body Utility.Requests is
 
 
 
+   Short_Short_Integer_Size : constant Stream_Element_Offset := Short_Short_Integer'Max_Size_In_Storage_Elements;
+
+   --===========================================================================
+   --
+   --===========================================================================
+   function Read_Short_Short_Integer (This : in out Stream_Reader_Type) return Short_Short_Integer is
+   begin
+
+      if This.Buffer.Data'Last >= This.Cursor + Short_Short_Integer_Size - 1 then
+         declare
+            V : Short_Short_Integer; for V'Address use This.Buffer.Data (This.Cursor)'Address;
+         begin
+            This.Cursor := This.Cursor + Short_Short_Integer_Size;
+            return V;
+         end;
+
+      else
+         return 0;
+      end if;
+
+   end Read_Short_Short_Integer;
+   -----------------------------------------------------------------------------
+
+
+
+
    Short_Integer_Size : constant Stream_Element_Offset := Short_Integer'Max_Size_In_Storage_Elements;
 
    --===========================================================================

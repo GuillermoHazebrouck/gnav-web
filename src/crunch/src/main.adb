@@ -32,6 +32,7 @@ with Aircraft;
 with Traffic;
 with Utility;
 use  Utility;
+with Utility.Maps;
 
 --//////////////////////////////////////////////////////////////////////////////
 -- This special program is able to cut ESRI or binary terrain files in smaller
@@ -108,10 +109,6 @@ begin
                Ada.Text_IO.Put_Line ("processing traffic data...");
 
                Traffic.Start_Tracker;
-
-            else
-
-               Ada.Text_IO.Put_Line ("invalid instruction " & Key);
 
             end if;
 

@@ -20,9 +20,15 @@
 
 -- Depencencies
 --//////////////////////////////////////////////////////////////////////////////
-
 -- Standard
+with Ada.Command_Line;
+-- Gnat
+with GNAT.Sockets;
+use  GNAT.Sockets;
+-- Standard
+with Ada.Exceptions;
 with Ada.Calendar;
+use  Ada.Calendar;
 with Ada.Directories;
 with Ada.Text_IO;
 with Ada.Streams;
@@ -36,7 +42,78 @@ with Utility;
 --
 --//////////////////////////////////////////////////////////////////////////////
 package body Traffic is
-           
+        
+   Reference   : Position_Record := (50.7, 3.8);
+   
+   Limits      : Position_Record := (1.0, 2.0);
+   
+   Radius      : Long_Float      := 150.0;
+   
+   UTC_Offset  : Duration        := +2.0 * 3600.0;
+         
+   --===========================================================================
+   -- Configures the tracker based on command line arguments
+   --===========================================================================
+   procedure Setup_Tracker is
+      use Utility;
+   begin
+      
+      for I in 1..Ada.Command_Line.Argument_Count loop
+
+         declare
+            Argument : String_Buffer (100);
+         begin
+
+            Argument.Load (Ada.Command_Line.Argument (I));
+
+            declare
+               Key : String := Argument.Read_Next ('=');
+               Val : String := Argument.Read_Next ('=');
+            begin
+
+               if    Key = "LATITUDE" then
+
+                  Reference.Lat := Long_Float (Integer'Value (Val));
+
+               elsif Key = "LONGITUDE" then
+
+                  Reference.Lon := Long_Float (Integer'Value (Val));
+
+               elsif Key = "RANGE" then
+
+                  Radius := abs Long_Float (Integer'Value (Val));
+
+               elsif Key = "UTC" then
+
+                  UTC_Offset := Duration'Value (Val);
+
+               end if;
+
+            end;
+
+         end;
+
+      end loop;
+      
+      declare
+         V : Point_Record;
+         R : Position_Record;
+      begin
+         
+         V.Set (Radius, Radius);         
+         R := Utility.Maps.Position (Reference, V);
+         
+         Limits.Lat := R.Lat - Reference.Lat;
+         Limits.Lon := R.Lon - Reference.Lon;
+         
+      end;
+      
+   end Setup_Tracker;
+   -----------------------------------------------------------------------------
+   
+   
+   
+   
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    -- 2 bytes natural
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -55,32 +132,55 @@ package body Traffic is
    -- Tracks can live maximum 127 seconds from block timestamp
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    type Track_Record is tagged record
-                                        -- Bytes / Units / Accuracy
-      Id        : Natural;              -- 4
-      Age       : Short_Short_Integer;  -- 1 [s]    1
-      Latitude  : Float;                -- 4 [deg]  ?
-      Longitude : Float;                -- 4 [deg]  ?
-      Altitude  : Short_Natural;        -- 2 [m]    1
-      Vario     : Short_Short_Integer;  -- 1 [dm/s] 1
-      Speed     : Short_Short_Natural;  -- 1 [m/s]  1
-      Course    : Short_Short_Natural;  -- 1 [deg]  1.5
+      
+      Timestamp : Time;
+      Time      : Natural;
+      
+      -- MESSAGE FIELDS                 -- Bytes / Units / Accuracy
+      Id        : Natural := 0;         -- 4
+      Age       : Short_Short_Integer;  -- 1       [s]     1
+      Latitude  : Float;                -- 4       [deg]   ?
+      Longitude : Float;                -- 4       [deg]   ?
+      Altitude  : Short_Natural;        -- 2       [m]     1
+      Vario     : Short_Short_Integer;  -- 1       [dm/s]  1
+      Speed     : Short_Short_Natural;  -- 1       [m/s]   2
+      Course    : Short_Short_Natural;  -- 1       [deg]   1.5
+      Rotation  : Short_Short_Integer;  -- 1       [deg/s] 1
       
    end record;
+      
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   -- The list of active tracks
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   Tracks : array (1..50) of Track_Record;
+         
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   -- The number of tracks sent trough the stream
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   Track_Count : Short_Short_Natural := 0;
    
+   --===========================================================================
+   --
+   --===========================================================================
    function To_String (This : Track_Record) return String is
    begin
       
       return "track: " &
-        Natural'Image (This.Id)                 & "/" &
-        Short_Short_Integer'Image (This.Age)    & "/" &
-        Float'Image (This.Latitude)             & "/" &
-        Float'Image (This.Longitude)            & "/" &
-        Short_Natural'Image (This.Altitude)     & "/" &
-        Short_Short_Integer'Image (This.Vario)  & "/" &
-        Short_Short_Natural'Image (This.Speed)  & "/" &
-        Short_Short_Natural'Image (This.Course);
+        Natural'Image (This.Id)                 & "/ T =" &
+        Short_Short_Integer'Image (This.Age)    & "/ L =" &
+        Float'Image (This.Latitude)             & "/ L =" &
+        Float'Image (This.Longitude)            & "/ A =" &
+        Short_Natural'Image (This.Altitude)     & "/ V =" &
+        Short_Short_Integer'Image (This.Vario)  & "/ S =" &
+        Short_Short_Natural'Image (This.Speed)  & "/ C =" &
+        Short_Short_Natural'Image (This.Course) & "/ R =" &
+        Short_Short_Integer'Image (This.Rotation);
               
    end To_String;
+   -----------------------------------------------------------------------------
+   
+   
+   
    
    --===========================================================================
    --
@@ -163,10 +263,6 @@ package body Traffic is
             when '7' => R := R + 7 * E;
             when '8' => R := R + 8 * E;
             when '9' => R := R + 9 * E;
-            when '+' => 
-               return R;
-            when '-' => 
-               return -R;
             when others =>
                -- Invalid
                return 0;
@@ -223,7 +319,7 @@ package body Traffic is
          R := -R;
       end if;
       
-      Ada.Text_IO.Put_Line (Value & "->" & Lat_Image ((R,0.0)));
+      --Ada.Text_IO.Put_Line (Value & "->" & Lat_Image ((R,0.0)));
       
       return R;
       
@@ -251,7 +347,7 @@ package body Traffic is
          R := -R;
       end if;
       
-      Ada.Text_IO.Put_Line (Value & "->" & Lon_Image ((0.0,R)));
+      --Ada.Text_IO.Put_Line (Value & "->" & Lon_Image ((0.0,R)));
       
       return R;
       
@@ -313,105 +409,360 @@ package body Traffic is
    
    
    
-   Cached_Time : Natural := Natural (Ada.Calendar.Seconds (Ada.Calendar.Clock));
+   
+   
+   Cached_Time : Natural := Natural (Seconds (Ada.Calendar.Clock));
+   
+   
+   
+   --===========================================================================
+   -- Adds the track to the array
+   --===========================================================================
+   procedure Add_Track (New_Track : Track_Record) is
+   begin
+            
+      -- Update if already present
+      -------------------------------------
+      for Track of Tracks loop
+         
+         if Track.Id = New_Track.Id then
+            
+            Track := New_Track;
+            
+            return;
+            
+         end if;
+         
+      end loop;
+      
+      -- Add as new one
+      -------------------------------------
+      for Track of Tracks loop
+         
+         if Track.Id = 0 then
+            
+            Track := New_Track;
+            
+            return;
+            
+         end if;
+         
+      end loop;
+      
+      Ada.Text_IO.Put_Line ("WARNING: the track stack is full");
+      
+   end Add_Track;
+   -----------------------------------------------------------------------------
+       
+   
+   
+   
+   --===========================================================================
+   -- Writes the tracks to the output file
+   --===========================================================================
+   procedure Write_Tracks is
+
+      use Ada.Streams.Stream_IO;
+
+      T       : Integer;
+      File_Id : File_Type;
+      Stream  : Ada.Streams.Stream_IO.Stream_Access;
+
+   begin
+      
+      Track_Count := 0;
+      
+      -- Recompute ages
+      --------------------------------------------------------------------------      
+      for Track of Tracks loop
+            
+         if Track.Id /= 0 then
+            
+            T := Track.Time - Cached_Time;
+                  
+            if not (abs T in 0..120) then
+               Track.Id := 0;
+            else               
+               Track_Count := Track_Count + 1;  
+               Track.Age   := Short_Short_Integer (T);
+            end if;
+                        
+         end if;
+         
+      end loop;
+           
+      -- Write
+      --------------------------------------------------------------------------      
+      if Track_Count > 0 then
+
+         --Ada.Text_IO.Put_Line ("#" & Short_Short_Natural'Image (Track_Count));
+            
+         -- Start writing
+         -----------------------------------------------------------------------
+
+         Create (File => File_Id,
+                 Mode => Out_File,
+                 Name => "traffic.bin");
+
+         Stream := Ada.Streams.Stream_IO.Stream (File_Id);
+
+         -- Timestamp
+         Natural'Write (Stream, Cached_Time);
+         
+         -- Reference
+         Long_Float'Write (Stream, Reference.Lat);
+         Long_Float'Write (Stream, Reference.Lon);
+         
+         -- Count
+         Short_Short_Natural'Write (Stream, Track_Count); --  4 bytes
+         
+         for Track of Tracks loop
+            
+            if Track.Id /= 0 then
+               
+               Natural'Write (Stream, Track.Id);
+               Short_Short_Integer'Write (Stream, Track.Age);
+               Float'Write (Stream, Track.Latitude);
+               Float'Write (Stream, Track.Longitude);
+               Short_Natural'Write (Stream, Track.Altitude);
+               Short_Short_Natural'Write (Stream, Track.Speed);
+               Short_Short_Natural'Write (Stream, Track.Course);
+               Short_Short_Integer'Write (Stream, Track.Vario);
+               Short_Short_Integer'Write (Stream, Track.Rotation);
+               
+            end if;
+            
+         end loop;
+         
+         Close (File_Id);
+         
+      end if;
+         
+   end Write_Tracks;
+   -----------------------------------------------------------------------------
+   
+   
+   
    
    --===========================================================================
    -- Converts an APR message into a compact G-NAV binary representation
    --===========================================================================
    procedure Parse_Apr_Message (Message : String) is
-      Track : Track_Record;
    begin
+      
+      if Message (Message'First) = '#' then
+         Ada.Text_IO.Put_Line (Message);
+         return;         
+      end if;
       
       for I in Message'Range loop
          
          if Message (I) = ':' and I < Message'Last then
             
-            if 
-              Message (I + 1) = '/'    and then
+            if
               Message'Last   >= I + 44 and then
-              Message (Message'First + 26) /= '&'
+              Message (I +  1)  = '/'  and then              
+              Message (I + 26) /= '&'
             then
                
                -- This is a beacon
                
                declare
-                  T : Integer;
-                  P : Position_Record;
+                  Track : Track_Record;                  
+                  T     : Integer;
+                  P     : Position_Record;
                   S,
                   C,
                   A,
-                  D : Natural := 0;                  
+                  D     : Natural := 0;
+                  K     : String (1..2);
                begin
                   
-                  T     := Get_Time    (Message (I +  2 .. I +  7)) - Cached_Time;
-                  P.Lat := Get_Lat     (Message (I +  9 .. I + 16)) - Reference.Lat;
-                  P.Lon := Get_Lon     (Message (I + 18 .. I + 26)) - Reference.Lon;
-                  S     := Get_Natural (Message (I + 28 .. I + 30));
-                  C     := Get_Natural (Message (I + 32 .. I + 34));
-                  A     := Get_Natural (Message (I + 38 .. I + 43));
+                  -- Reference timestamp (system only)
+                  --------------------------------------------------------------                  
+                  Track.Timestamp := Clock;
                   
-                  Ada.Text_IO.Put_Line ("offset=" & Image (P));
-                           
-                  if not (abs T in 1..120) then
-                     -- The track differs more than 2 minutes -> discard  
-                     Ada.Text_IO.Put_Line ("too old:" & Integer'Image (T));
+                  -- Aircraft type: only gliders in G-NAV
+                  --------------------------------------------------------------
+                     
+                  K (1) := Message (I + 17);
+                  K (2) := Message (I + 27);
+                  
+                  if K /= "/'" then
                      return;
                   end if;
-                          
+                    
+                  -- Creation time and age (s): maximum 30 seconds old
+                  --------------------------------------------------------------
+                  
+                  Track.Time := Get_Time (Message (I +  2 .. I +  7));
+                  
+                  T := Track.Time - Cached_Time;   
+                  
+                  if not (abs T in 0..30) then
+                     return;
+                  end if;
+                  
+                  Track.Age := Short_Short_Integer (T);
+                      
+                  -- Position: only inside the limits
+                  --------------------------------------------------------------
+                               
+                  P.Lat := Get_Lat (Message (I +  9 .. I + 16)) - Reference.Lat;
+                  P.Lon := Get_Lon (Message (I + 18 .. I + 26)) - Reference.Lon;
+     
                   if
                     abs P.Lat > Limits.Lat or else
                     abs P.Lon > Limits.Lon 
                   then
-                     -- The track is out of the zone of interest -> discard
-                     Ada.Text_IO.Put_Line ("out of bounds " & Image (P));
                      return;
                   end if;
-                          
-                  Track.Age       := Short_Short_Integer (T);                       
+                  
                   Track.Latitude  := Float (P.Lat);
                   Track.Longitude := Float (P.Lon);
+                          
+                  -- Course (1.5 deg)
+                  --------------------------------------------------------------
                   
-                  if S in 0..918 then
-                     Track.Speed := Short_Short_Natural (Float (S) / 3.6);
-                  else
-                     Track.Speed := 255; --> read as invalid
-                  end if;
-                       
+                  C := Get_Natural (Message (I + 28 .. I + 30));
+                  
                   if C in 0..360 then
                      Track.Course := Short_Short_Natural (Float (C) / 1.5);
                   else
-                     Track.Course := 255; --> read as invalid
+                     -- Invalid course, can't be represented correctly
+                     return;
                   end if;
-                             
-                  if A in 0..45_000 then
+                  
+                  -- Speed (LSB = 2 km/h)
+                  --------------------------------------------------------------
+                  
+                  S := Natural (Float (Get_Natural (Message (I + 32 .. I + 34))) * 1.852);
+                  
+                  if S in 25..500 then -- TODO: start from 25 km/h
+                     Track.Speed := Short_Short_Natural (Float (S) / 2.0);
+                  else
+                     -- Invalid speed
+                     return;
+                  end if;
+               
+                  -- Altitude (m)
+                  --------------------------------------------------------------
+                  
+                  A := Natural (Float (Get_Natural (Message (I + 38 .. I + 43))) * 0.3048);
+                       
+                  if A in 0..10_000 then
                      Track.Altitude := Short_Natural (A);
                   else
-                     Track.Altitude := 65_535; --> read as invalid
+                     -- Invalid altitude
+                     return;
                   end if;
-                                       
+                         
+                  -- Id from the OGN extension
+                  --------------------------------------------------------------
+               
+                  for J in I + 44 .. Message'Last - 10 loop
+                  
+                     if 
+                       Message (J)   = 'i' and then
+                       Message (J+1) = 'd'
+                     then
+                     
+                        Track.Id := Parse_Hex_Id (Message (J+2..J+9));
+                     
+                        exit;
+                     
+                     end if;
+               
+                  end loop;
+                          
+                  -- Vario from the OGN extension (LSB => 0.1m/s)
+                  --------------------------------------------------------------
+                  
+                  Track.Vario := 0;
+                  
+                  for J in I + 44 .. Message'Last - 2 loop
+                  
+                     if 
+                       Message (J)   = 'f' and then
+                       Message (J+1) = 'p' and then
+                       Message (J+2) = 'm'
+                     then
+                     
+                        for K in reverse J-10..J loop
+                  
+                           if Message (K) = ' ' then
+                              
+                              declare                                 
+                                 Vario : Integer := Integer (Float'Value (Message (K+1..J-1)) * 0.0508);
+                              begin
+                                 
+                                 if    Vario < -127 then
+                                    Vario := -127;
+                                 elsif Vario > 127 then
+                                    Vario :=  127;                                   
+                                 end if;
+                                 
+                                 Track.Vario := Short_Short_Integer (Vario);
+                     
+                              end;
+                              
+                              exit;
+                     
+                           end if;
+                           
+                        end loop;
+                     
+                     end if;
+               
+                  end loop;
+                   
+                  -- Rotation from the OGN extension
+                  --------------------------------------------------------------
+                  
+                  Track.Rotation := 0;
+                  
+                  for J in I + 44 .. Message'Last - 2 loop
+                  
+                     if 
+                       Message (J)   = 'r' and then
+                       Message (J+1) = 'o' and then
+                       Message (J+2) = 't'
+                     then
+                     
+                        for K in reverse J-10..J loop
+                  
+                           if Message (K) = ' ' then
+                              
+                              declare                                 
+                                 Rotation : Integer := Integer (Float'Value (Message (K+1..J-1)) * 3.0);
+                              begin
+                                 
+                                 if    Rotation < -127 then
+                                    Rotation := -127;
+                                 elsif Rotation > 127 then
+                                    Rotation :=  127;                                   
+                                 end if;
+                                 
+                                 Track.Rotation := Short_Short_Integer (Rotation);
+                     
+                              end;
+                              
+                              exit;
+                     
+                           end if;
+                           
+                        end loop;
+                     
+                     end if;
+               
+                  end loop;
+               
+                  Ada.Text_IO.Put_Line (Track.To_String);
+               
+                  Add_Track (Track);
+                                    
                end;
                
-               -- Recover the id
-               
-               for J in I + 44 .. Message'Last - 10 loop
-                  
-                  if 
-                    Message (J)   = 'i' and then
-                    Message (J+1) = 'd'
-                  then
-                     
-                     Track.Id := Parse_Hex_Id (Message (J+2..J+9));
-                     
-                     exit;
-                     
-                  end if;
-               
-               end loop;
-               
-               Ada.Text_IO.Put_Line (Track.To_String);
-               
-               -- Search for the flight id in the stack and update it
-      
             end if;
             
             exit;
@@ -419,7 +770,13 @@ package body Traffic is
          end if;
          
       end loop;
-      
+       
+   exception
+      when E : others =>
+         
+         Ada.Text_IO.Put_Line ("ERROR: while parsing message >" & Message);
+         Ada.Text_IO.Put_Line (Ada.Exceptions.Exception_Message (E));
+         
    end Parse_Apr_Message;
    -----------------------------------------------------------------------------
    
@@ -430,9 +787,152 @@ package body Traffic is
    -- Reads the aircraft data from the data file 'data/aircraft.dat'
    --===========================================================================
    procedure Start_Tracker is
+      
+      Address   : Sock_Addr_Type;
+      Socket_Id : Socket_Type;
+      Data      : Stream_Element_Array (1..10_000);
+      Step      : Duration := 0.250;
+      Timer     : Duration := 0.000;
+      
+      -- Storage for incomplete part of the message that could not be parsed
+      Buffer    : String (1..2000);
+      K         : Natural := 0;
+      
+      --========================================================================
+      -- Send a message to the APR server
+      --========================================================================
+      procedure Send_Message (Message : String) is
+
+         Buffer : Stream_Element_Array (1..Message'Length); 
+         for Buffer'Address use Message'Address;
+         Last   : Stream_Element_Offset := Buffer'First;
+         
+      begin
+         
+         while Last /= Buffer'Last loop            
+            Send_Socket (Socket_Id, Buffer (Last..Buffer'Last), Last);
+         end loop;
+         
+      end Send_Message;
+      --------------------------------------------------------------------------
+                    
+      --========================================================================
+      -- Digest the incoming data
+      --========================================================================
+      procedure Process_Message (Message : String) is
+         
+         I : Natural := Message'First;
+                  
+      begin
+         
+         Cached_Time := Natural (Seconds (Ada.Calendar.Clock - UTC_Offset));
+         
+         -- Prepend pending part of previous message
+         
+         for J in Message'Range loop
+            
+            if Message (J) = ASCII.LF and I < J then
+               
+               if K > 0 then
+                  Parse_Apr_Message (Buffer (1..K) & Message (I..J-1));
+                  K := 0;
+               else                  
+                  Parse_Apr_Message (Message (I..J-1));
+               end if;
+               
+               I := J + 1;
+               
+            end if;
+            
+         end loop;
+         
+         if I < Message'Last then
+            
+            if Message'Last - I < Buffer'Length then
+            
+               K := Buffer'First;
+               for J in I .. Message'Last loop               
+                  Buffer (K) := Message (J);
+                  K := K + 1;
+               end loop;
+                        
+            else
+               K := 0;                        
+               Ada.Text_IO.Put_Line ("WARINING: missing message part >" & Message (I..Message'Last));
+               
+            end if;
+            
+         end if;
+          
+      exception
+         when E : others =>
+            Ada.Text_IO.Put_Line ("error while processing message");
+
+      end Process_Message;
+      --------------------------------------------------------------------------
+      
    begin
       
-      Parse_Apr_Message (Message => "FLRDDDEAD>APRS,qAS,EDER:/223000h5101.86N/00404.21E'342/049/A=005524 id0ADDDEAD -454fpm -1.1rot 8.8dB 0e +51.2kHz gps4x5");
+      Ada.Text_IO.Put_Line ("Connecting to OGN server full feed stream...");
+      
+      <<Restart_Connection>>
+      
+      Address.Addr := Addresses (Get_Host_By_Name ("aprs.glidernet.org"), 1);
+      Address.Port := 14580; -- (use 10152 for full feed)
+              
+      Create_Socket  (Socket_Id, Address.Family, Socket_Stream);
+      Connect_Socket (Socket_Id, Address);
+      
+      Ada.Text_IO.Put_Line ("OGN server connected: " & Image (Address));
+                
+      Send_Message ("user GNAV-RX pass -1 vers GNAV 1.0 filter r/51/4/150 t/tu" & ASCII.LF);
+      
+      loop
+         
+         -- Read incoming messages
+         -----------------------------------------------------------------------
+         
+         declare            
+            Last : Stream_Element_Offset;
+            From : Sock_Addr_Type;
+         begin
+            
+            Receive_Socket (Socket_Id, Data, Last, From);
+            
+            if Last in Data'Range then
+
+               declare
+                  Messages : String (1.. Positive (Last)); 
+                  for Messages'Address use Data'Address;
+               begin                  
+                  Process_Message (Messages);
+               end;
+
+            end if;
+            
+            Write_Tracks;
+                     
+            -- Renew keep alive every 10 seconds
+            -----------------------------------------------------------------------
+            Timer := Timer + Step;         
+            if Timer > 20.0 then
+               Send_Message ("# keepalive" & ASCII.LF);
+               Ada.Text_IO.Put_Line ("**poll**");
+               Timer := 0.0;
+            end if;
+            
+            delay Step;
+           
+         exception    
+            when E : others =>
+               Ada.Text_IO.Put_Line ("ERROR: while reading from socket");
+               Ada.Text_IO.Put_Line (Ada.Exceptions.Exception_Message (E));
+               goto Restart_Connection;
+         end;
+ 
+      end loop;
+      
+      --Parse_Apr_Message (Message => "FLRDDDEAD>APRS,qAS,EDER:/223000h5101.86N/00404.21E'342/049/A=005524 id0ADDDEAD -454fpm -1.1rot 8.8dB 0e +51.2kHz gps4x5");
       
    end Start_Tracker;
    -----------------------------------------------------------------------------

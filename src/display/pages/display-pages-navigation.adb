@@ -29,6 +29,7 @@ with Flight;
 with Flight.Aircraft;
 with Flight.Plan;
 with Flight.Representation;
+with Flight.Traffic;
 --with Flight.Stream;
 with Glex;
 with Glex.Basic;
@@ -117,8 +118,6 @@ package body Display.Pages.Navigation is
    
    Velocity_Unit : Velocity_Units := Unit_Kilometer_Hour;
    
-   Gnss_Blink_Count : Natural := 0;
-
    -- Fonts
    ---------------------------------
    Font_1 : Glex.Fonts.Font_Style_Record := (Width     => 0.010, 
@@ -684,7 +683,7 @@ package body Display.Pages.Navigation is
    begin
       
       -- Map
-      --------------------------------
+      --------------------------------------------------------------------------
       
       Maps.Terrain.Draw (View);
       
@@ -697,12 +696,12 @@ package body Display.Pages.Navigation is
       Maps.Airspaces.Draw_Labels (View);
       
       -- Flight representation
-      --------------------------------
+      --------------------------------------------------------------------------
       
       Flight.Representation.Draw (View);
       
       -- Flight data
-      --------------------------------
+      --------------------------------------------------------------------------
       
       Display.Panels.Gauges.Draw;
       
@@ -715,7 +714,7 @@ package body Display.Pages.Navigation is
       Btn_Cone_Mode.Draw;
          
       -- Map moving buttons
-      --------------------------------
+      --------------------------------------------------------------------------
       
       Btn_Center.Draw;
       
@@ -738,7 +737,7 @@ package body Display.Pages.Navigation is
       end if;
         
       -- MacCready setup buttons
-      --------------------------------
+      --------------------------------------------------------------------------
       
       Btn_Ascent_Plus.Draw;
       
@@ -762,7 +761,7 @@ package body Display.Pages.Navigation is
                        Alignment => Glex.Fonts.Alignment_CC);
       
       -- Optimal airspeed in current direction
-      ----------------------------------------
+      --------------------------------------------------------------------------
       
       -- TODO: manage units to synchronize with gauges panel (km/h <-> kts)
        
@@ -797,7 +796,7 @@ package body Display.Pages.Navigation is
       end if;
          
       -- Necessary altitude to reach waypoint
-      ----------------------------------------
+      --------------------------------------------------------------------------
       
       -- TODO: manage units to synchronize with gauges panel (m <-> FT)
  
@@ -829,7 +828,7 @@ package body Display.Pages.Navigation is
       end if;
       
       -- Optimal airspeed to reach waypoint
-      ----------------------------------------
+      --------------------------------------------------------------------------
       
       Glex.Fonts.Draw (Text      => ">",
                        X         => Btn_Ascent_Min.Get_Allocation.X - 0.14,
@@ -859,35 +858,52 @@ package body Display.Pages.Navigation is
       end if;
       
       -- Wind speed and direction
-      ----------------------------------------
+      --------------------------------------------------------------------------
 
       Draw_Wind;
       
       -- Show blinking GNSS flag when no fix
-      ----------------------------------------
+      --------------------------------------------------------------------------
 
       X := Btn_Ascent_Min.Get_Allocation.X + Btn_Ascent_Min.Get_Allocation.W;
 
       if not Flight.Data.Is_Recent (Flight.Field_Position, Lapse => 4.0) then
-               
-         if Display.Blink or Gnss_Blink_Count > 10 then
+             
+         Glex.Fonts.Draw (Text      => "GNSS",
+                          X         => X,
+                          Y         => 0.94,
+                          Style     => Font_1,
+                          Color     => Line_Red,
+                          Alignment => Glex.Fonts.Alignment_LR);
             
-            Glex.Fonts.Draw (Text      => "GNSS",
+      end if;
+      
+      -- Show automatic position reporting system (APRS) warning
+      --------------------------------------------------------------------------
+
+      declare
+         use Flight.Traffic;
+      begin
+         
+         if Get_Status /= Aprs_Disabled then
+         
+            case Get_Status is         
+               when Aprs_Not_Receiving => Color := Line_Red;
+               when Aprs_Not_Reporting => Color := Line_Yellow;
+               when Aprs_Nominal       => Color := Line_Grass;
+               when others             => null;
+            end case;
+         
+            Glex.Fonts.Draw (Text      => "APRS",
                              X         => X,
-                             Y         => 0.94,
+                             Y         => 0.88,
                              Style     => Font_1,
-                             Color     => Line_Red,
+                             Color     => Color,
                              Alignment => Glex.Fonts.Alignment_LR);
                
-            Gnss_Blink_Count := Gnss_Blink_Count + 1;
-            
          end if;
          
-      else
-               
-         Gnss_Blink_Count := 0;
-               
-      end if;
+      end;
       
    end Draw;
    -----------------------------------------------------------------------------

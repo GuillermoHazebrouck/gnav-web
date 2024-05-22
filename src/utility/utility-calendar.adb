@@ -180,6 +180,20 @@ package body Utility.Calendar is
 
 
 
+   --===========================================================================
+   -- (See specification file)
+   --===========================================================================
+   procedure Set_Clock (Date : in out Times; Clock : Day_Lapse) is
+   begin
+
+      Date.Seconds := Clock;
+
+   end Set_Clock;
+   -----------------------------------------------------------------------------
+
+
+
+
    Norm_Year : constant array (Months) of Days := (31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31);
 
    Leap_Year : constant array (Months) of Days := (31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31);
