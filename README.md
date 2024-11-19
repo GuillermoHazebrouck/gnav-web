@@ -7,7 +7,7 @@ G-NAV is almost entirely written in Ada and it is compiled to [WASM](https://web
 
 <img src="./docs/gnav_1.jpg" width="400">
 
-Visit the project [website](https://sites.google.com/view/g-nav/news) for a demo and more infomation.
+Visit the project [website](https://sites.google.com/view/g-nav) for a demo and more infomation.
 
 There is also a native version of the software that you can find [here](https://github.com/GuillermoHazebrouck/gnav). The applications are quite similar, although there will be more and more discrepancies as this project evolves.
 
