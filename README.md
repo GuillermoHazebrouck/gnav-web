@@ -1,4 +1,5 @@
-# G-NAV
+# G-NAV 
+<img src="./docs/g-nav-logo-small.png" width="80">
 G-NAV is an electronic flight instrument system (EFIS) for soaring that runs as a progressive web application (PWA) in most mobile web browsers (Chrome, Safari and others).
 The application can be installed locally in the client browser and it starts up and runs offline like a native app.
 
