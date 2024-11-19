@@ -22,8 +22,8 @@ G-NAV web consists of two modules: the web application itself and the data compi
 For the data compiler you will need a native Ada FSF compiler.
 
 > [!TIP]
-> To make your life easier you can just use the released version of AdaWebPack. You will need LLVM 4.0 for this.
-> Also, in the `src/patch/` directory you will find a modified version of `adawebpack.mjs`, which is temporarily necessary to overcome issues.
+> To make your life easier you can just use the released version of AdaWebPack. You will need LLVM 14.0 for this.
+> Also, in the `src/patch/` directory you will find a modified version of `adawebpack.mjs`, which is temporarily necessary to include new features and overcome issues.
 
 ## Releases
 Keep an eye on the [releases](https://github.com/GuillermoHazebrouck/gnav-web/releases), there will be precompiled versions in the future.
