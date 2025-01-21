@@ -17,9 +17,13 @@ To operate G-NAV, please read the user's manual located in the `docs` folder. Th
 > [!CAUTION]
 > G-NAV is not a certified IFR equipment! You should never use this device as a primary source of navigation or collision avoidance.
 
+## System architecture
+This web version of G-NAV consist of a client application that makes HTTP requests to a specialized server. The server has access to the necessary static files (terrain, airspaces, references, etc.) and it also connects to different online data sources to provide real time traffic and meteo information.
+
 ## Compiling
-G-NAV web consists of two modules: the web application itself and the data compiler. For the web app you will need AdaWebPack. The compilation procedure is similar to that of the examples you will find there.
+G-NAV web consists of three modules: the web application itself, the web server and the data compiler. For the web app you will need AdaWebPack. The compilation procedure is similar to that of the examples you will find there.
 For the data compiler you will need a native Ada FSF compiler.
+For the web server you will need a basic structure of the AdaWebServer.
 
 > [!TIP]
 > To make your life easier you can just use the released version of AdaWebPack. You will need LLVM 14.0 for this.
