@@ -15,6 +15,8 @@ Visit the project [website](https://go-gliding.app) for demo servers and more in
 There is also a native version of the software that you can find [here](https://github.com/GuillermoHazebrouck/gnav). The applications are quite similar, although there will be more and more discrepancies as this project evolves.
 
 ## Operation
+G-NAV provides navigation functions, real time data feed and awareness alerts.
+
 To operate G-NAV, please read the user's manual located in the `docs` folder. This document covers the user functions and the web system administration. Be aware that the project is still under development.
 
 > [!CAUTION]
@@ -22,13 +24,15 @@ To operate G-NAV, please read the user's manual located in the `docs` folder. Th
 
 ## System architecture
 This web version of G-NAV consist of a client application that makes HTTP requests to a specialized server. The server has access to the necessary static files (terrain, airspaces, references, etc.) and it also connects to different online data sources to provide real time traffic and meteo information.
-For the traffic data, the server is able to connect to the OGN APRS servers via TCP, parse the text messages on the fly and feed an internal stack. This information residing in main memory is then used to generate a highly compressed and customized response for each client, containing only tracks around the provided location.
+
+For the traffic data, the server is able to connect to the OGN APRS servers via TCP, parse the text messages on the fly and feed an internal stack. This information residing in main memory is then used to generate a highly compressed and customized response for each client, containing only tracks around the provided location. If the follow function is activated, then the server records the provided location in an IGC file that can be retrieved afterwards using the assigned squawk code.
+
 For the meteo data, the server can be configured to obtain metar messages from different stations via HTTP requests. The server automatically checks for updates and periodically generates a compressed response for the clients. The client then dynamically selects the closest station during the flight and can automatically feed the current wind and QNH values.
 
 ## Compiling
 G-NAV web consists of three modules: the web application itself, the web server and the data compiler. For the web app you will need AdaWebPack. The compilation procedure is similar to that of the examples you will find there.
 For the data compiler you will need a native Ada FSF compiler.
-For the web server you will need a basic structure of the AdaWebServer.
+For the web server you will additionally need a basic structure of the AdaWebServer.
 
 > [!TIP]
 > To make your life easier you can just use the released version of AdaWebPack. You will need LLVM 14.0 for this.
