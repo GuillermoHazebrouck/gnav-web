@@ -12,4 +12,5 @@ The configuration of the G-NAV server is done from the gnav.ini file. You will h
 
 The server file runs from the ./server folder. Make sure you add there the appropriate key and certificate files (refer to the AdaWebServer documentation).
 
->[!IMPORTANT]: Note that we run on a customized AdaWebServer. The source code is a fork from version 24, where we have simplified the structure and removed the modules that where not necessary for this project.
+> [!IMPORTANT]
+> Note that we run on a customized AdaWebServer. The source code is a fork from version 24, where we have simplified the structure and removed the modules that where not necessary for this project.
