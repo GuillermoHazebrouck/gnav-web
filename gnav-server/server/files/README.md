@@ -8,6 +8,7 @@ This folder contains the full dataset for the operational web server, including 
 - The PWA manifest
 - The AdaWebPack glue code
 
-> [!IMPORTANT] You need to place the compiled web client WebAssembly module 'main.wasm' in this folder. Normally, the Ada compiler is instructed to do that automatically in the gpr file.
+> [!IMPORTANT]
+> The compiled web client WebAssembly module 'main.wasm' needs to be in this folder. Normally, the Ada compiler is instructed to do that automatically via the gpr file.
 
 Note that the 'index.html' file contains the JavaScript code to load and excecute the G-NAV wasm module.
