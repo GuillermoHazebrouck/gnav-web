@@ -1,0 +1,34 @@
+{
+  "name": "G-NAV",
+  "short-name": "G-NAV",
+  "display": "standalone",
+  "scope": "https://ebgg.go-gliding.app/",
+  "start_url": "https://ebgg.go-gliding.app",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "type": "image/vnd.microsoft.icon",
+      "sizes": "32x32"
+    },
+    {
+      "src": "/icon_16x16.png",
+      "type": "image/png",
+      "sizes": "16x16"
+    },
+    {
+      "src": "/icon_32x32.png",
+      "type": "image/png",
+      "sizes": "32x32"
+    },
+    {
+      "src": "/icon_192x192.png",
+      "type": "image/png",
+      "sizes": "192x192"
+    },
+    {
+      "src": "/icon_512x512.png",
+      "type": "image/png",
+      "sizes": "512x512"
+    }],
+  "background_color": "#000"
+}

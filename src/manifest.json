@@ -1,8 +1,0 @@
-{
-  "name": "G-NAV",
-  "short_name": "gnav",
-  "display": "standalone",
-  "background_color": "#000",
-  "description": "Flight computer for glider pilots",
-  "scope":"/"
-}

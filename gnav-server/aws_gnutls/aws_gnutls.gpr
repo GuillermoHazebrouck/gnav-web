@@ -1,0 +1,35 @@
+------------------------------------------------------------------------------
+--                              Ada Web Server                              --
+--                                                                          --
+--                     Copyright (C) 2010-2012, AdaCore                     --
+--                                                                          --
+--  This is free software;  you can redistribute it  and/or modify it       --
+--  under terms of the  GNU General Public License as published  by the     --
+--  Free Software  Foundation;  either version 3,  or (at your option) any  --
+--  later version.  This software is distributed in the hope  that it will  --
+--  be useful, but WITHOUT ANY WARRANTY;  without even the implied warranty --
+--  of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU     --
+--  General Public License for  more details.                               --
+--                                                                          --
+--  You should have  received  a copy of the GNU General  Public  License   --
+--  distributed  with  this  software;   see  file COPYING3.  If not, go    --
+--  to http://www.gnu.org/licenses for a complete copy of the license.      --
+------------------------------------------------------------------------------
+
+with "gnatcoll";
+
+project aws_gnutls is
+
+   for Source_Dirs use (".", "http2", "ssl", "zlib", "templates");
+   for Object_Dir  use ".obj/";
+   for Main use ("hello_world.adb");
+
+   package Linker is
+      for Default_Switches ("Ada") use ("-lgnutls", "-lz");
+   end Linker;
+   
+   package Builder is
+      for Default_Switches ("Ada") use ("-gnat12");
+   end Builder;
+
+end aws_gnutls;

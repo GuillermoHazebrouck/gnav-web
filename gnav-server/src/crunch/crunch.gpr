@@ -1,0 +1,18 @@
+project crunch is
+
+   for Languages use ("Ada");
+   for Source_Dirs use ("./**", "../utility", "../math/**", "../stacks/**");
+   for Object_Dir use ".obj";
+   for Main use ("crunch.adb");
+
+   package Binder is
+   for Default_Switches ("Ada") use ("-static");
+   -- -static/-shared makes the gnat runtime static or shared
+   end Binder;
+
+   package Builder is
+      for Default_Switches ("Ada") use ("-gnat12");
+      for Executable ("crunch.adb") use "../../../server/files/data/gnav_crunch";
+   end Builder;
+
+end crunch;
