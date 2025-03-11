@@ -1,6 +1,6 @@
 # G-NAV Web server
 
-This is the full G-NAV web server system capable of handling HTLM/2 server-client communications, consuming real time tracks from the OGN APRS servers and fetching updated METAR data from a set of https servers.
+This is the full G-NAV web server system capable of handling HTTP/2 server-client communications, consuming real time tracks from the OGN APRS servers and fetching updated METAR data from a set of https servers.
 
 The configuration of the G-NAV server is done from the gnav.ini file. You will have to set:
 
