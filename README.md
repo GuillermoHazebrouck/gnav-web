@@ -5,7 +5,7 @@ The application can be installed locally in the client browser and it starts up 
 
 G-NAV is almost entirely written in Ada and it is compiled to [WASM](https://webassembly.org/) through [AdaWebPack](https://github.com/godunko/adawebpack). Furthermore, G-NAV fully relies on [WebGL](https://www.khronos.org/webgl/) for graphics.
 
-<img src="./docs/gnav_1.jpg" width="400">
+<img src="./docs/V4A/V4A_Range.jpg" width="400">
 
 Visit the project [website](https://go-gliding.app) for demo servers and more infomation.
 
@@ -37,7 +37,7 @@ For the web server you will additionally need a basic structure of the AdaWebSer
 
 ## Releases
 Keep an eye on the [releases](https://github.com/GuillermoHazebrouck/gnav-web/releases), there will be precompiled versions in the future.
-The provision of data is not part of the project yet, you will need to collect your own dataset to build a functional system.
+The provision of data is not part of the project yet, you will need to collect your own dataset to build a functional system. We only provide here minimal example datasets and the tools to generate the necessary data feed.
 
 ## Credits
 This software is made possible thanks to:
