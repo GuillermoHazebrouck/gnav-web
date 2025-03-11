@@ -5,7 +5,7 @@ The application can be installed locally in the client browser and it starts up 
 
 G-NAV is almost entirely written in Ada and it is compiled to [WASM](https://webassembly.org/) through [AdaWebPack](https://github.com/godunko/adawebpack). Furthermore, G-NAV fully relies on [WebGL](https://www.khronos.org/webgl/) for graphics.
 
-<img src="./docs/V4A/V4A_Range.jpg" width="400">
+<img src="./docs/V4A/screenshots/V4A_Range.jpg" width="400">
 
 Visit the project [website](https://go-gliding.app) for demo servers and more infomation.
 
