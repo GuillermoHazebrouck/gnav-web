@@ -171,11 +171,11 @@ package Flight.Aircraft is
       --------------------------------------------------------------------------
       Aspect_Ratio : Float := 15.0;
       
-      -- 2nd degree polynomial for turbulent drag regime
+      -- 4th degree polynomial for rough drag regime
       --------------------------------------------------------------------------
-      T0, T1, T2 : Long_Float := 0.0;
+      T0, T1, T2, T3, T4 : Long_Float := 0.0;
       
-      -- 4th degree polynomial for laminar drag regime
+      -- 4th degree polynomial for clean drag regime
       --------------------------------------------------------------------------
       L0, L1, L2, L3, L4 : Long_Float := 0.0;
       

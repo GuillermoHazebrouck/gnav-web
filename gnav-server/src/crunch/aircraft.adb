@@ -75,16 +75,18 @@ package body Aircraft is
               Aircraft.L4 = 0.0
             then
                
-               Ada.Text_Io.Put_Line ("error: invalid laminar drag for " & Aircraft.Model);
+               Ada.Text_Io.Put_Line ("error: invalid clean drag for " & Aircraft.Model);
                Aircraft.Valid := False;
                             
             elsif
               Aircraft.T0 = 0.0 and then
               Aircraft.T1 = 0.0 and then
-              Aircraft.T2 = 0.0
+              Aircraft.T2 = 0.0 and then
+              Aircraft.T3 = 0.0 and then
+              Aircraft.T4 = 0.0
             then
                
-               Ada.Text_Io.Put_Line ("error: invalid turbulent drag for " & Aircraft.Model);
+               Ada.Text_Io.Put_Line ("error: invalid rough drag for " & Aircraft.Model);
                Aircraft.Valid := False;
                
             end if;
@@ -283,6 +285,8 @@ package body Aircraft is
                Float'Write (Stream, Aircraft.T0);          
                Float'Write (Stream, Aircraft.T1); 
                Float'Write (Stream, Aircraft.T2);
+               Float'Write (Stream, Aircraft.T3); 
+               Float'Write (Stream, Aircraft.T4);
                
             end if;
          
@@ -430,7 +434,7 @@ package body Aircraft is
                      
                   end if;
                   
-               elsif Key = "LAMINAR" then
+               elsif Key = "CLEAN" then
                   
                   Value_Reader.Load (Value);
                   
@@ -440,14 +444,16 @@ package body Aircraft is
                   Aircraft.L3 := Float'Value (Trim (Value_Reader.Read_Next (',')));
                   Aircraft.L4 := Float'Value (Trim (Value_Reader.Read_Next (',')));
                        
-               elsif Key = "TURBULENT" then
+               elsif Key = "ROUGH" then
                              
                   Value_Reader.Load (Value);
                     
                   Aircraft.T0 := Float'Value (Trim (Value_Reader.Read_Next (',')));
                   Aircraft.T1 := Float'Value (Trim (Value_Reader.Read_Next (',')));
                   Aircraft.T2 := Float'Value (Trim (Value_Reader.Read_Next (',')));
-                      
+                  Aircraft.T3 := Float'Value (Trim (Value_Reader.Read_Next (',')));
+                  Aircraft.T4 := Float'Value (Trim (Value_Reader.Read_Next (',')));
+                  
                elsif Key = "CL_MIN" then
                                
                   Aircraft.Cl_Min := Float'Value (Value);

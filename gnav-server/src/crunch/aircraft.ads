@@ -157,7 +157,7 @@ private
       
       -- 2nd degree polynomial for turbulent drag regime
       --------------------------------------------------------------------------
-      T0, T1, T2 : Float := 0.0;
+      T0, T1, T2, T3, T4 : Float := 0.0;
       
       -- 4th degree polynomial for laminar drag regime
       --------------------------------------------------------------------------

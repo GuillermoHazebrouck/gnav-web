@@ -358,6 +358,8 @@ package body Flight.Aircraft is
             Aircrafts (I).T0 := Long_Float (S.Read_Float);
             Aircrafts (I).T1 := Long_Float (S.Read_Float);
             Aircrafts (I).T2 := Long_Float (S.Read_Float);
+            Aircrafts (I).T3 := Long_Float (S.Read_Float);
+            Aircrafts (I).T4 := Long_Float (S.Read_Float);
             
             Utility.Log.Put_Message (Utility.Strings.Float_Image (Float (Aircrafts (I).L0), 6));
             Utility.Log.Put_Message (Utility.Strings.Float_Image (Float (Aircrafts (I).L1), 6));
@@ -476,8 +478,8 @@ package body Flight.Aircraft is
       
       for I in This_Aircraft.Polar'Range loop
          
-         -- NOTE: only the skin drag component is scaled up from the laminar
-         --       to the turbulent regimes. The induced component remains 
+         -- NOTE: only the skin drag component is scaled up from the clean
+         --       to the rough regimes. The induced component remains 
          --       constant, which is estimated using the Prandtl formula
          --------------------------------------------------------------------
          D    := Long_Float (I - 1) / Long_Float (N - 1);
@@ -487,11 +489,13 @@ package body Flight.Aircraft is
          Cl_4 := Cl * Cl_3;
             
          Cdi  := Cl_2 / Ae_Pi;
-            
+         
          Cdpt := This_Aircraft.T0;
          Cdpt := Cdpt + This_Aircraft.T1 * Cl;
          Cdpt := Cdpt + This_Aircraft.T2 * Cl_2;
-            
+         Cdpt := Cdpt + This_Aircraft.T3 * Cl_3;
+         Cdpt := Cdpt + This_Aircraft.T4 * Cl_4;
+         
          Cdpl := This_Aircraft.L0;
          Cdpl := Cdpl + This_Aircraft.L1 * Cl;
          Cdpl := Cdpl + This_Aircraft.L2 * Cl_2;
@@ -555,8 +559,6 @@ package body Flight.Aircraft is
       
    begin
 
-    --Utility.Log.Put_Message ("computing gliding spectrum");
-      
       Gliding_Spectrum := (others => No_Best_Gliding_Record);
       
       W := Float (Range_Cone.Wind.Norm2);
