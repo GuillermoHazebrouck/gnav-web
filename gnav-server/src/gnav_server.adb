@@ -108,8 +108,8 @@ begin
 
    Net.SSL.Initialize
      (Ssl_Config,
-      Certificate_Filename => "aws-server.crt",
-      Key_Filename         => "aws-server.key",
+      Certificate_Filename => "gnav-server.crt",
+      Key_Filename         => "gnav-server.key",
       Security_Mode        => Net.Ssl.TLSv1_2);
 
    Server.Set_Ssl_Config (Web_Server,

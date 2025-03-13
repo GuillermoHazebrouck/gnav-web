@@ -52,8 +52,17 @@ package body Display.Panels.Metar is
    Font_1 : Glex.Fonts.Font_Style_Record := (Width     => 0.012,
                                              Height    => 0.040,
                                              Space     => 0.006,
-                                             Rendering => Glex.Fonts.Font_Glow,
-                                             Thickness => Glex.Fonts.Font_Regular);
+                                             Rendering => Glex.Fonts.Font_Simple,
+                                             Thickness => Glex.Fonts.Font_Thin);
+
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   --
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   Font_2 : Glex.Fonts.Font_Style_Record := (Width     => 0.008,
+                                             Height    => 0.030,
+                                             Space     => 0.006,
+                                             Rendering => Glex.Fonts.Font_Simple,
+                                             Thickness => Glex.Fonts.Font_Thin);
 
    --===========================================================================
    --
@@ -212,6 +221,12 @@ package body Display.Panels.Metar is
                   Alignment_LR);
 
          end if;
+
+         Draw (Integer_Image (Flight.Meteo.Get_Number_Of_Stations) & " ACTIVE STATIONS",
+               Pnl_Metar.Get_Allocation.X + 0.01, Pnl_Metar.Get_Allocation.Y + 0.02,
+               Font_2,
+               Line_Gray,
+               Alignment_LL);
 
       else
 

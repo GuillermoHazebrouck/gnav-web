@@ -106,6 +106,11 @@ package body Flight.Meteo is
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    Closest_Station_Name : Metar_Name := "ZZZZ";
 
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   -- The number of loaded stations
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   Number_Of_Stations : Natural := 0;
+
    --===========================================================================
    --
    --===========================================================================
@@ -167,8 +172,7 @@ package body Flight.Meteo is
    --===========================================================================
    procedure Process_Meteo_Request (S : in out Stream_Reader_Type) is
 
-      Count  : Short_Short_Natural := 0;
-      I      : Short_Short_Natural := 0;
+      I      : Natural := 0;
       M      : constant Short_Short_Natural := Short_Short_Natural (Station_Range'Last);
       Offset : Float := 0.0;
 
@@ -183,16 +187,16 @@ package body Flight.Meteo is
          Metar_Time := Epoch + Long_Lapse_Of (S.Read_Long_Float);
          Next_Metar := Metar_Time + Lapse_Of (S.Read_Float);
 
-         Utility.Log.Put_Message ("next update at " & Utility.Strings.Day_Lapse_Image (Next_Metar));
+         Utility.Log.Put_Message ("next update expected at " & Utility.Strings.Day_Lapse_Image (Next_Metar));
 
-         Count := Short_Short_Natural'Min (S.Read_Short_Short_Natural, M);
+         Number_Of_Stations := Natural (Short_Short_Natural'Min (S.Read_Short_Short_Natural, M));
 
-         Utility.Log.Put_Message ("number of stations: " & Utility.Strings.Integer_Image (Natural (Count)));
+         Utility.Log.Put_Message (Utility.Strings.Integer_Image (Number_Of_Stations) & " active stations");
 
          for Station of Stations loop
 
             I := I + 1;
-            exit when I > Count;
+            exit when I > Number_Of_Stations;
 
             Station.Name         := S.Read_String (4);
             Station.Date         := Metar_Time + Lapse_Of (S.Read_Float);
@@ -207,23 +211,11 @@ package body Flight.Meteo is
             Station.Visibility   := Natural (S.Read_Short_Natural);
             Station.Loaded       := True;
 
-            --Utility.Log.Put_Message (Station.Name & " " & Utility.Strings.Day_Lapse_Image (Station.Date));
-            --Utility.Log.Put_Message (Maps.Image (Station.Position));
-            --Utility.Log.Put_Message (Utility.Strings.Integer_Image (Station.Qnh));
-            --Utility.Log.Put_Message (Utility.Strings.Integer_Image (Station.Wind_Speed));
-            --Utility.Log.Put_Message (Utility.Strings.Integer_Image (Station.Wind_Course));
-            --Utility.Log.Put_Message (Utility.Strings.Integer_Image (Station.Temperature));
-            --Utility.Log.Put_Message (Utility.Strings.Integer_Image (Station.Dew_Point));
-            --Utility.Log.Put_Message (Utility.Strings.Integer_Image (Station.Cloud_Base));
-            --Utility.Log.Put_Message (Utility.Strings.Integer_Image (Station.Visibility));
-
          end loop;
 
          Last_Update := Cached_Time;
 
       end if;
-
-      Utility.Log.Put_Message (Short_Short_Natural'Image (Count) & " meteo stations added");
 
       Find_Closest_Station;
 
@@ -262,8 +254,9 @@ package body Flight.Meteo is
             if Request.Get_Status = 200 then
 
                declare
-                  Reader : Stream_Reader_Type := Request.Get_Response;
+                  Reader : Stream_Reader_Type;
                begin
+                  Request.Get_Response  (Reader);
                   Process_Meteo_Request (Reader);
                end;
 
@@ -308,8 +301,6 @@ package body Flight.Meteo is
                        URL    => Metar_File,
                        Async  => True);
 
-         Request.Set_Response_Type (Array_Buffer);
-
          Request.Set_Timeout (Timeout_Period);
 
          Last_Request := Cached_Time;
@@ -344,16 +335,18 @@ package body Flight.Meteo is
 
 
 
+
    --===========================================================================
    -- Indicates if the data is the most recent one
    --===========================================================================
    function Updated return Boolean is
    begin
 
-      return Next_Metar - Cached_Time > No_Lapse;
+      return Next_Metar /= No_Time and then Next_Metar - Cached_Time > No_Lapse;
 
    end Updated;
    -----------------------------------------------------------------------------
+
 
 
 
@@ -366,7 +359,21 @@ package body Flight.Meteo is
       return Stations (Local_Station)'Access;
 
    end Get_Local_Station;
+   -----------------------------------------------------------------------------
 
+
+
+
+   --===========================================================================
+   -- Returns the number of active stations
+   --===========================================================================
+   function Get_Number_Of_Stations return Natural is
+   begin
+
+      return Number_Of_Stations;
+
+   end Get_Number_Of_Stations;
+   -----------------------------------------------------------------------------
 
 end Flight.Meteo;
 --------------------------------------------------------------------------------

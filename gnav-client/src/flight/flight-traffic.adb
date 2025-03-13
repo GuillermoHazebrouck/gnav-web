@@ -350,8 +350,9 @@ package body Flight.Traffic is
             if Request.Get_Status = 200 then
 
                declare
-                  Reader : Stream_Reader_Type := Request.Get_Response;
+                  Reader : Stream_Reader_Type;
                begin
+                  Request.Get_Response    (Reader);
                   Process_Traffic_Request (Reader);
                end;
 
@@ -401,8 +402,6 @@ package body Flight.Traffic is
       Request.Open (Method => Get_Request,
                     URL    => Traffic_File,
                     Async  => True);
-
-      Request.Set_Response_Type (Array_Buffer);
 
       Request.Set_Timeout (Timeout_Period);
 

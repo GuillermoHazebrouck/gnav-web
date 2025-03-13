@@ -1,44 +1,25 @@
-------------------------------------------------------------------------------
---                                                                          --
---                            Matreshka Project                             --
---                                                                          --
---                               Web Framework                              --
---                                                                          --
---                            Web API Definition                            --
---                                                                          --
-------------------------------------------------------------------------------
---                                                                          --
--- Copyright © 2016-2022, Vadim Godunko <vgodunko@gmail.com>                --
--- All rights reserved.                                                     --
---                                                                          --
--- Redistribution and use in source and binary forms, with or without       --
--- modification, are permitted provided that the following conditions       --
--- are met:                                                                 --
---                                                                          --
---  * Redistributions of source code must retain the above copyright        --
---    notice, this list of conditions and the following disclaimer.         --
---                                                                          --
---  * Redistributions in binary form must reproduce the above copyright     --
---    notice, this list of conditions and the following disclaimer in the   --
---    documentation and/or other materials provided with the distribution.  --
---                                                                          --
---  * Neither the name of the Vadim Godunko, IE nor the names of its        --
---    contributors may be used to endorse or promote products derived from  --
---    this software without specific prior written permission.              --
---                                                                          --
--- THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS      --
--- "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT        --
--- LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR    --
--- A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT     --
--- HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,   --
--- SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED --
--- TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR   --
--- PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF   --
--- LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING     --
--- NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS       --
--- SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.             --
---                                                                          --
-------------------------------------------------------------------------------
+--//////////////////////////////////////////////////////////////////////////////
+-- G-NAV PROJECT
+-- Written by Guillermo HAZEBROUCK - gahazebrouck@gmail.com
+--\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\\
+-- This file is part of "G-NAV".
+--
+-- G-NAV is free software: you can redistribute it and/or modify
+-- it under the terms of the GNU General Public License as published by
+-- the Free Software Foundation, either version 3 of the License, or
+-- (at your option) any later version.
+--
+-- G-NAV is distributed in the hope that it will be useful,
+-- but WITHOUT ANY WARRANTY; without even the implied warranty of
+-- MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+-- GNU General Public License for more details.
+--
+-- You should have received a copy of the GNU General Public License
+-- along with G-NAV.  If not, see <https://www.gnu.org/licenses/>.
+--------------------------------------------------------------------------------
+
+-- Depencencies
+--//////////////////////////////////////////////////////////////////////////////
 with Ada.Finalization;
 with Ada.Streams;
 --
@@ -49,8 +30,9 @@ with Web.Strings;
 
 --//////////////////////////////////////////////////////////////////////////////
 -- This is a new wrapper on XHR requests that provides methods for direct
--- access on the data.
+-- access on the data. The original code comes from AdaWebPack.
 -- All modifications made for the G-NAV project made by Guillermo Hazebrouck.
+-- This package only handles array buffer request types.
 --//////////////////////////////////////////////////////////////////////////////
 package Utility.Requests is
 
@@ -71,16 +53,6 @@ package Utility.Requests is
    DONE             : constant State := 4;
 
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   --
-   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   type Response_Type_Kind is (Default,
-                               Array_Buffer,
-                               Blob,
-                               Document,
-                               JSON,
-                               Text);
-
-   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    -- An XHR request
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    type XML_Http_Request is new WASM.Objects.Object_Reference and Web.DOM.Event_Targets.Event_Target with null record;
@@ -95,7 +67,7 @@ package Utility.Requests is
    --===========================================================================
    -- Sets the request method, request URL, and synchronous flag.
    --===========================================================================
-   procedure Open (Self     : XML_Http_Request'Class;
+   procedure Open (Self     : in out XML_Http_Request'Class;
                    Method   : Web.Strings.Web_String;
                    URL      : Web.Strings.Web_String;
                    Async    : Boolean := True;
@@ -127,17 +99,6 @@ package Utility.Requests is
    function Get_Status (Self : XML_Http_Request'Class) return Web.DOM_Unsigned_Short;
 
    --===========================================================================
-   -- Returns the response type.
-   --===========================================================================
-   function Get_Response_Type (Self : XML_Http_Request'Class) return Response_Type_Kind;
-
-   --===========================================================================
-   --  Can be set to change the response type. Values are: the empty string
-   --  (default), "arraybuffer", "blob", "document", "json", and "text".
-   --===========================================================================
-   procedure Set_Response_Type (Self : in out XML_Http_Request'Class; To : Response_Type_Kind);
-
-   --===========================================================================
    --  Can be set to change the timeout
    --===========================================================================
    procedure Set_Timeout (Self : in out XML_Http_Request'Class; Value : Natural);
@@ -145,7 +106,7 @@ package Utility.Requests is
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    --
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   type Stream_Reader_Type is new Ada.Finalization.Controlled with private;
+   type Stream_Reader_Type is new Ada.Finalization.Limited_Controlled with private;
 
    --===========================================================================
    -- Indicates if the stream is empty
@@ -230,34 +191,9 @@ package Utility.Requests is
    function Read_String (This : in out Stream_Reader_Type; Size : Positive) return String;
 
    --===========================================================================
-   -- Initialization.
-   --===========================================================================
-   overriding procedure Initialize (This : in out Stream_Reader_Type);
-
-   --===========================================================================
-   -- Adjustment.
-   --===========================================================================
-   overriding procedure Adjust (This : in out Stream_Reader_Type);
-
-   --===========================================================================
-   -- Finalization.
-   --===========================================================================
-   overriding procedure Finalize (This : in out Stream_Reader_Type);
-
-   --===========================================================================
    -- Returns the response stream
    --===========================================================================
-   function Get_Response (Self : XML_Http_Request'Class) return Stream_Reader_Type;
-
-   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   --
-   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   No_Stream_Reader : constant Stream_Reader_Type;
-
-   --===========================================================================
-   -- Returns the text response entity body
-   --===========================================================================
-   function Get_Response_Text (Self : XML_Http_Request'Class) return Web.Strings.Web_String;
+   procedure Get_Response (Self : XML_Http_Request'Class; Reader : in out Stream_Reader_Type);
 
    --***************************************************************************
    --
@@ -289,12 +225,12 @@ private
    --===========================================================================
    -- Returns the response stream
    --===========================================================================
-   function Get_Response (Self : XML_Http_Request'Class) return Stream_Element_Buffer_Access;
+   function Get_Response_Data (Self : XML_Http_Request'Class) return Stream_Element_Buffer_Access;
 
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    --
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   type Stream_Reader_Type is new Ada.Finalization.Controlled with record
+   type Stream_Reader_Type is new Ada.Finalization.Limited_Controlled with record
 
       Buffer : Stream_Element_Buffer_Access;
 
@@ -302,12 +238,15 @@ private
 
    end record;
 
-   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   --
-   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   No_Stream_Reader : constant Stream_Reader_Type := (Ada.Finalization.Controlled with
-                                                      Buffer => null,
-                                                      Cursor => 0);
+   --===========================================================================
+   -- Initialization.
+   --===========================================================================
+   overriding procedure Initialize (This : in out Stream_Reader_Type);
+
+   --===========================================================================
+   -- Finalization.
+   --===========================================================================
+   overriding procedure Finalize (This : in out Stream_Reader_Type);
 
    --===========================================================================
    --

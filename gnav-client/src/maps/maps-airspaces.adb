@@ -216,7 +216,6 @@ package body Maps.Airspaces is
    --===========================================================================
    procedure Load_Airspaces (S : in out Stream_Reader_Type) is
 
-      A : Natural := 0; -- sectors
       P : Natural := 0; -- parts
       N : Natural := 0; -- nodes
       J : Natural := 0; -- part counter
@@ -240,7 +239,7 @@ package body Maps.Airspaces is
          ----------------------------------------------
       Number_Of_Airspaces := S.Read_Natural;
 
-      Utility.Log.Put_Message ("loading " & Integer_Image (A) & " airspaces");
+      Utility.Log.Put_Message ("loading " & Integer_Image (Number_Of_Airspaces) & " airspaces");
       Utility.Log.Put_Message ("stream size = " & Integer_Image (S.Get_Size));
 
       for I in 1 .. Number_Of_Airspaces loop
@@ -727,7 +726,8 @@ package body Maps.Airspaces is
    begin
 
       if
-        Status'First = 1 and then
+        Status'Length > 0 and then
+        Status'First = 1  and then
         Status'Last  = Number_Of_Airspaces
       then
 

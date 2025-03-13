@@ -58,8 +58,8 @@ package body Display.Panels.Radio is
    Font_1 : Glex.Fonts.Font_Style_Record := (Width     => 0.010,
                                              Height    => 0.036,
                                              Space     => 0.006,
-                                             Rendering => Glex.Fonts.Font_Glow,
-                                             Thickness => Glex.Fonts.Font_Regular);
+                                             Rendering => Glex.Fonts.Font_Simple,
+                                             Thickness => Glex.Fonts.Font_Thin);
 
    First_Row  : Natural := 1;
 
@@ -167,7 +167,7 @@ package body Display.Panels.Radio is
 
          if not Maps.Reference.Station_Has_Airfield (R) then
 
-            Line_Color := Line_Yellow;
+            Line_Color := Line_White;
 
          elsif Maps.Reference.Get_Distance_To_Station (R) <= 10 then
 
@@ -175,10 +175,10 @@ package body Display.Panels.Radio is
 
          elsif Maps.Reference.Get_Distance_To_Station (R) <= 20 then
 
-            Line_Color := Line_Orange;
+            Line_Color := Line_Yellow;
 
          else
-            Line_Color := Line_Gray;
+            Line_Color := Line_Orange;
 
          end if;
 

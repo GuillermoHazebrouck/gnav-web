@@ -68,6 +68,11 @@ package Flight.Meteo is
    function Get_Local_Station return not null access Meteo_Station_Record;
 
    --===========================================================================
+   -- Returns the number of active stations
+   --===========================================================================
+   function Get_Number_Of_Stations return Natural;
+
+   --===========================================================================
    -- Configures the initial data, timers and requests
    --===========================================================================
    procedure Initialize;

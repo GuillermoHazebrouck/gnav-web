@@ -1,17 +1,13 @@
 // This scrip generates the polynomials for the polar curves
 //----------------------------------------------------------
-clear;
 Rho=1.225;
 Pi =3.14159265358979;
 
-// Choose here polar to load
-exec polar_duo.sce
-
 P(:,1)=P(:,1)/3.6;
 
-// Convert to pair of aerodynamic coefficients
-T  =P(:,2)./P(:,1)
-E  =atan(T)
+// Convert to pair of aerodynamic lift and drag coefficients CL-CD
+T  =P(:,2)./P(:,1);
+E  =atan(T);
 
 CL =(9.8*M*cos(E))./(0.5*Rho*S*(P(:,1)).^2);
 CD =CL.*T;
@@ -22,30 +18,37 @@ CDp=CD-CDi;
 CLCD=CL./CD;
 CLCDmax=max(CLCD);
 
-disp(CLCDmax);
-disp(max(CL));
-disp(min(CL));
+mprintf('Model %s\n', Name);
+mprintf('CL/CD_max => %5.1f\n', CLCDmax);
+mprintf('CL_max    => %8.6f\n', max(CL));
+mprintf('CL_min    => %8.6f\n', min(CL));
 
-scf(0)
+scf(0);
 clf;
-title("Polar curves CD(CL)");
+title(Name + " - Polar curves CD(CL)");
 plot(CL, CD,  'ro');
 plot(CL, CDp, 'go-');
 plot(CL, CDi, 'bo-');
 
-// Find the polynomial
-p=polyfit(CL, CDp, 4);
-disp(p);
+// Find the clean polar polynomial
+poly_clean=polyfit(CL, CDp, 4);
 
-// Reconstruct the polar using the 4th degree polynomial using 0.2 CL steps
-CL_poly= (min(CL):0.005:max(CL));
-CD_poly= p(1)*CL_poly.^4 + p(2)*CL_poly.^3 + (p(3)+1/(Pi*A))*CL_poly.^2 + p(4)*CL_poly + p(5)
-plot(CL_poly, CD_poly, 'm-');
+mprintf('Clean     => %10.8f, %10.8f, %10.8f, %10.8f, %10.8f\n', poly_clean(5), poly_clean(4), poly_clean(3), poly_clean(2), poly_clean(1));
 
-// Represent the polar in V-W domain for different Mc-values
+// Reconstruct the polar using the 4th degree polynomial using CL steps
+CL_poly_clean= (min(CL):0.005:max(CL));
+CD_poly_clean= poly_clean(1)*CL_poly_clean.^4 + poly_clean(2)*CL_poly_clean.^3 + (poly_clean(3)+1/(Pi*A))*CL_poly_clean.^2 + poly_clean(4)*CL_poly_clean + poly_clean(5);
+plot(CL_poly_clean, CD_poly_clean, 'm-');
+
+exec rough_polar.sci;
+
+legend(['CD original','CDp clean', 'CDi', 'CD clean','CDp rough'],2);
+xs2png(0, Name + '_Polar.png');
+
+// Represent the clean polar in V-W domain for different Mc-values
 scf(1);
 clf;
-title("Gliding slope for sink from 0 to 4 [m/s]");
+title(Name + " - Gliding ratio and optimal speed for sink from 0 to 4 [m/s]");
 xlabel("Airspeed [km/h]");
 ylabel("Slope");
 
@@ -55,14 +58,14 @@ for i=1:m
     
     Sink=4*(i-1)/(m-1);
     
-    G=atan(CD_poly./CL_poly);
+    G=atan(CD_poly_clean./CL_poly_clean);
     
     n=length(G);
     
     Va=zeros(1,n);
     
     for j=1:n
-        Va(j)=(2.0 * M * 9.8 * cos(G(j)) / (Rho*S*CL_poly(j))).^0.5;         
+        Va(j)=(2.0 * M * 9.8 * cos(G(j)) / (Rho*S*CL_poly_clean(j))).^0.5;         
     end
     
     Vh=Va.* cos(G);
@@ -84,3 +87,5 @@ for i=1:m
 end
 
 plot(Vopt, Hmax, 'm-o');
+legend(['Gliding ratio','Speed to fly'],1);
+xs2png(1, Name + '_Slope.png')

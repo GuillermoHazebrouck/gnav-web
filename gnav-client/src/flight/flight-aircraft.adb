@@ -325,7 +325,7 @@ package body Flight.Aircraft is
             
             -- Mass
             --------------------------
-               
+            
             P := S.Read_Natural;
             
             if P > Natural (Mass_Point_Range'Last) then
@@ -360,13 +360,7 @@ package body Flight.Aircraft is
             Aircrafts (I).T2 := Long_Float (S.Read_Float);
             Aircrafts (I).T3 := Long_Float (S.Read_Float);
             Aircrafts (I).T4 := Long_Float (S.Read_Float);
-            
-            Utility.Log.Put_Message (Utility.Strings.Float_Image (Float (Aircrafts (I).L0), 6));
-            Utility.Log.Put_Message (Utility.Strings.Float_Image (Float (Aircrafts (I).L1), 6));
-            Utility.Log.Put_Message (Utility.Strings.Float_Image (Float (Aircrafts (I).L2), 6));
-            Utility.Log.Put_Message (Utility.Strings.Float_Image (Float (Aircrafts (I).L3), 6));
-            Utility.Log.Put_Message (Utility.Strings.Float_Image (Float (Aircrafts (I).L4), 6));
-            
+ 
          end loop;
          
       end if;

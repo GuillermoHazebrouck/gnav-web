@@ -1,6 +1,6 @@
 
-with "../adawebpack/lib/gnat/adawebpack_config.gpr";
-with "../adawebpack/lib/gnat/adawebpack.gpr";
+with "../awp/lib/gnat/adawebpack_config.gpr";
+with "../awp/lib/gnat/adawebpack.gpr";
 
 project gnav is
 

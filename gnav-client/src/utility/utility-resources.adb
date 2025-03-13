@@ -105,8 +105,9 @@ package body Utility.Resources is
                Utility.Log.Put_Message ("processing resource" & Resource_Range'Image (R));
 
                declare
-                  Reader : Stream_Reader_Type := Request.Get_Response;
+                  Reader : Stream_Reader_Type;
                begin
+                  Request.Get_Response (Reader);
                   Self.Handler (Reader);
                end;
 
@@ -183,8 +184,6 @@ package body Utility.Resources is
                Request.Open (Method => Get_Request,
                              URL    => Request_Queue (R).Name,
                              Async  => True);
-
-               Request.Set_Response_Type (Array_Buffer);
 
                Request.Set_Timeout (Request_Queue (R).Timeout);
 
