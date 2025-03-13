@@ -35,14 +35,8 @@ You can use the `gnav-server/server` folder for testing the server during develo
 
 Note that there are README pages on the most important folders.
 
-## Compiling
-G-NAV web consists of three modules: the web application itself, the web server and the data compiler. For the web app you will need AdaWebPack. The compilation procedure is similar to that of the examples you will find there.
-For the data compiler you will need a native Ada FSF compiler.
-For the web server you will additionally need a basic structure of the AdaWebServer.
-
-> [!TIP]
-> To make your life easier you can just use the released version of AdaWebPack. You will need LLVM 14.0 for this.
-> Also, in the `src/patch/` directory you will find a modified version of `adawebpack.mjs`, which is temporarily necessary to include new features and overcome issues.
+> [!NOTE]
+> You will find a modified version of `adawebpack.mjs`, which is temporarily necessary to include new features and overcome issues.
 
 ## Releases
 Keep an eye on the [releases](https://github.com/GuillermoHazebrouck/gnav-web/releases), there will be precompiled versions in the future.
