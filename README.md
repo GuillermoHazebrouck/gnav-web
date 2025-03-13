@@ -39,7 +39,7 @@ Note that there are README pages on the most important folders.
 > You will find a modified version of `adawebpack.mjs`, which is temporarily necessary to include new features and overcome issues.
 
 ## Releases
-Keep an eye on the [releases](https://github.com/GuillermoHazebrouck/gnav-web/releases), there will be precompiled versions in the future.
+Keep an eye on the [releases](https://github.com/GuillermoHazebrouck/gnav-web/releases) for the most recent version. We are providing the client WASM module and excecutables for the server and the data compiler that run under Linux x86-64.
 The provision of data is not part of the project yet, you will need to collect your own dataset to build a functional system. We only provide here minimal example datasets and the tools to generate the necessary data feed.
 
 ## Credits
