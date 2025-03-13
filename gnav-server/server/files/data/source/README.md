@@ -34,3 +34,10 @@ gnav_crunch will also search for the reference.dat and radio.dat files. The entr
 
 ## Compiling the terrain data
 Terrain data must come in the form of an ESRI grid file. You can use, for example, OpenTopography to obtains high resolution terrain data worldwide.
+You need to enter the TERRAIN keyword along with the latitudinal and longitudinal coordinates of the map bounds and the grid size:
+
+```
+cd terrain
+./../gnav_crunch TERRAIN S=49:12:59N W=002:08:37E N=51:49:06N E=006:45:51E
+cp terrain_*.bin ../../
+```
