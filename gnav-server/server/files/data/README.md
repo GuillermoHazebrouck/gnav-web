@@ -11,4 +11,4 @@ This folder must contain the precompiled data required by the system:
 - terrain_4.bin
 - terrain_5.bin
 
-This data is obtained by processing raw data with the gnav_crunch data compilation tool. Take a look at the README file on the ./source folder for more information.
+This data is obtained by processing raw data with the gnav_crunch data compilation tool. Take a look at the README file on the `source` folder for more information.
