@@ -40,7 +40,7 @@ CL_poly_clean= (min(CL):0.005:max(CL));
 CD_poly_clean= poly_clean(1)*CL_poly_clean.^4 + poly_clean(2)*CL_poly_clean.^3 + (poly_clean(3)+1/(Pi*A))*CL_poly_clean.^2 + poly_clean(4)*CL_poly_clean + poly_clean(5);
 plot(CL_poly_clean, CD_poly_clean, 'm-');
 
-exec rough_polar.sci;
+exec rough_polar.sce;
 
 legend(['CD original','CDp clean', 'CDi', 'CD clean','CDp rough'],2);
 xs2png(0, Name + '_Polar.png');
