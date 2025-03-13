@@ -26,6 +26,15 @@ For the traffic data, the server is able to connect to the OGN APRS servers via 
 
 For the meteo data, the server can be configured to obtain metar messages from different stations via HTTP requests. The server automatically checks for updates and periodically generates a compressed response for the clients. The client then dynamically selects the closest station during the flight and can automatically feed the current wind and QNH values.
 
+## Structure of the repository
+This repository is divided in two main folders:
+- `gnav-client`: this folder contains the source code for the WASM module in the `src` folder. To compile the project, you need to add a version of the AdaWebPack toolchain in the `awp` folder. This can be release 22.1 or 22.0. Then you simply run `gprbuild gnav.gpr`.
+- `gnav-server`: this folder contains the source code of the server in `src`, the data compiler in `src/crunch` and the server backbone structure in `server`. To compile the project, you need to add a version of the Ada Web Server in the `aws` folder. We provide here a bare bone version containing the minimum features necessary for this project, but you can add a more sophisticated version if you want. You will need to have the gnatcoll development library installed in any case. Then you simply run `gprbuild gnav_server.gpr` for the server and `gprbuild crunch.gpr` for the data compiler.
+
+You can use the `gnav-server/server` folder for testing the server during development. When you compile the different projects, the excecutables are copied into the right folder.
+
+Note that there are README pages on the most important folders.
+
 ## Compiling
 G-NAV web consists of three modules: the web application itself, the web server and the data compiler. For the web app you will need AdaWebPack. The compilation procedure is similar to that of the examples you will find there.
 For the data compiler you will need a native Ada FSF compiler.
