@@ -12,7 +12,7 @@ project crunch is
 
    package Builder is
       for Default_Switches ("Ada") use ("-gnat12");
-      for Executable ("crunch.adb") use "../../../server/files/data/gnav_crunch";
+      for Executable ("crunch.adb") use "../../../server/files/data/source/gnav_crunch";
    end Builder;
 
 end crunch;

@@ -64,6 +64,37 @@ package body Display.Panels.Metar is
                                              Rendering => Glex.Fonts.Font_Simple,
                                              Thickness => Glex.Fonts.Font_Thin);
 
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   --
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   Btn_Next : Button_Record;
+
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   --
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   Btn_Center : Button_Record;
+
+
+
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   --
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   Selected_Station : Flight.Meteo.Station_Range := Flight.Meteo.Get_Local_Station;
+
+   --===========================================================================
+   --
+   --===========================================================================
+   procedure Update_Selected_Station is
+   begin
+
+      Selected_Station := Flight.Meteo.Get_Local_Station;
+
+   end Update_Selected_Station;
+   -----------------------------------------------------------------------------
+
+
+
+
    --===========================================================================
    --
    --===========================================================================
@@ -72,6 +103,8 @@ package body Display.Panels.Metar is
       Allocation : Allocation_Record;
 
    begin
+
+      Flight.Meteo.On_Local_Station_Changed.Connect (Update_Selected_Station'Access);
 
       Allocation.X := X;
       Allocation.Y := Y;
@@ -89,6 +122,27 @@ package body Display.Panels.Metar is
       Pnl_Metar.Set_Font_Size (0.03, 0.25);
 
       Pnl_Metar.Set_Label_Color ((0.8, 0.8, 0.8, 1.0), (0.1, 0.1, 0.1, 1.0));
+
+      Allocation.X := X + 0.75 * W - 0.01;
+      Allocation.Y := Y + 0.12 * H;
+      Allocation.W := 0.25 * W;
+      Allocation.H := 0.12 * H;
+
+      Btn_Next.Set_Allocation (Allocation);
+
+      Btn_Next.Set_Style (Button_Action);
+
+      Btn_Next.Set_Label (">");
+
+      Allocation.X := X + 0.01;
+
+      Btn_Center.Set_Allocation (Allocation);
+
+      Btn_Center.Set_Style (Button_Normal);
+
+      Btn_Center.Set_Label (">X<");
+
+      Btn_Center.Set_Font_Size (0.4, 0.3);
 
    end Initialize;
    -----------------------------------------------------------------------------
@@ -110,7 +164,7 @@ package body Display.Panels.Metar is
       Y : Float   := Pnl_Metar.Get_Allocation.Y + Pnl_Metar.Get_Allocation.H - 0.1;
 
       Color   : Line_Color_Record := Line_Cyan;
-      Station : access Meteo_Station_Record := Get_Local_Station;
+      Station : access Meteo_Station_Record := Get_Station (Selected_Station);
 
    begin
 
@@ -222,8 +276,9 @@ package body Display.Panels.Metar is
 
          end if;
 
-         Draw (Integer_Image (Flight.Meteo.Get_Number_Of_Stations) & " ACTIVE STATIONS",
-               Pnl_Metar.Get_Allocation.X + 0.01, Pnl_Metar.Get_Allocation.Y + 0.02,
+         Draw ("STATION " & Integer_Image (Integer (Selected_Station)) & " OF " &
+               Integer_Image (Flight.Meteo.Get_Number_Of_Stations),
+               Pnl_Metar.Get_Allocation.X + 0.01, Pnl_Metar.Get_Allocation.Y + 0.04,
                Font_2,
                Line_Gray,
                Alignment_LL);
@@ -238,6 +293,10 @@ package body Display.Panels.Metar is
 
       end if;
 
+      Btn_Next.Draw;
+
+      Btn_Center.Draw;
+
    end Draw;
    -----------------------------------------------------------------------------
 
@@ -248,9 +307,53 @@ package body Display.Panels.Metar is
    --
    --===========================================================================
    procedure Screen_Pressed (X, Y : Float) is
+
+      use Flight.Meteo;
+
    begin
 
-      null;
+      if Btn_Next.Contains (X, Y) then
+
+         if Selected_Station < Station_Range'Last then
+
+            Selected_Station := Selected_Station + 1;
+
+         end if;
+
+         if not Get_Station (Selected_Station).Loaded then
+
+            Selected_Station := Station_Range'First;
+
+         end if;
+
+      elsif Btn_Center.Contains (X, Y) then
+
+         if Flight.Data.Is_Valid (Flight.Field_Position) then
+
+            declare
+               D : Float := Maps.Distance (Flight.Data.Position, Get_Station (Selected_Station).Position);
+            begin
+
+               for S in Station_Range loop
+
+                  if
+                    Get_Station (S).Loaded and then
+                    Maps.Distance (Flight.Data.Position, Get_Station (S).Position) < D
+                  then
+
+                     Selected_Station := S;
+
+                     Refresh := True;
+
+                  end if;
+
+               end loop;
+
+            end;
+
+         end if;
+
+      end if;
 
    end Screen_Pressed;
    -----------------------------------------------------------------------------

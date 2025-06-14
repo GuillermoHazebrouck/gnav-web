@@ -52,28 +52,25 @@ package body Maps is
 
 
    --===========================================================================
-   --
+   -- DDDMMmmm<E/W>
    --===========================================================================
    function Compact_Lon_String (Value : Long_Float) return String is
 
       Degrees : Long_Float := Long_Float'Floor (abs Value);
       Minutes : Long_Float := 60.0 * (abs Value - Degrees);
-      Seconds : Long_Float := 60.0 * (Minutes - Long_Float'Floor (Minutes));
 
       D : String := "000";
-      M : String := "00";
-      S : String := "00.0";
+      M : String := "00.000";
 
    begin
 
       Override (D, Integer_Image (Integer (Long_Float'Floor      (Degrees))), '0', True);
-      Override (M, Integer_Image (Integer (Long_Float'Truncation (Minutes))), '0', True);
-      Override (S, Float_Image   (Float   (Seconds), 1), '0', True);
+      Override (M, Float_Image   (Float   (Minutes), 3), '0', True);
 
       if Value < 0.0 then
-         return D & M & S (1..2) & S (4) & 'W';
+         return D & M (1..2) & M (4..6) & 'W';
       else
-         return D & M & S (1..2) & S (4) & 'E';
+         return D & M (1..2) & M (4..6) & 'E';
       end if;
 
    end Compact_Lon_String;
@@ -82,28 +79,25 @@ package body Maps is
 
 
    --===========================================================================
-   --
+   -- DDMMmmm<N/S>
    --===========================================================================
    function Compact_Lat_String (Value : Long_Float) return String is
 
       Degrees : Long_Float := Long_Float'Floor (abs Value);
       Minutes : Long_Float := 60.0 * (abs Value - Degrees);
-      Seconds : Long_Float := 60.0 * (Minutes - Long_Float'Floor (Minutes));
 
       D : String := "00";
-      M : String := "00";
-      S : String := "00.0";
+      M : String := "00.000";
 
    begin
 
-      Override (D, Integer_Image (Integer (Long_Float'Floor      (Degrees))), '0', True);
-      Override (M, Integer_Image (Integer (Long_Float'Truncation (Minutes))), '0', True);
-      Override (S, Float_Image   (Float   (Seconds), 1), '0', True);
+      Override (D, Integer_Image (Integer (Long_Float'Floor (Degrees))), '0', True);
+      Override (M, Float_Image   (Float   (Minutes), 3), '0', True);
 
       if Value < 0.0 then
-         return D & M & S (1..2) & S (4) & 'S';
+         return D & M (1..2) & M (4..6) & 'S';
       else
-         return D & M & S (1..2) & S (4) & 'N';
+         return D & M (1..2) & M (4..6) & 'N';
       end if;
 
    end Compact_Lat_String;

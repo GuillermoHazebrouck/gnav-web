@@ -129,6 +129,9 @@ package body Gnav_Admin_Callbacks is
 
       --------------------------------------------------------------------------
       -- Search request
+      -- The Squawk can be:
+      -- > 8 character user ID
+      -- > 6 character local device name (a local registration like OO-YZP)
       --------------------------------------------------------------------------
       elsif Content = "/search.html" then
 
@@ -142,7 +145,7 @@ package body Gnav_Admin_Callbacks is
 
             Log_Trace ("recording request for " & Squawk & " at " & Server);
 
-            if Squawk'Length = 8 and Server'Length = 4 then
+            if (Squawk'Length = 6 or Squawk'Length = 8) and Server'Length = 4 then
 
                -- Send the list of files using hyperlinks
                -----------------------------------------------------------------

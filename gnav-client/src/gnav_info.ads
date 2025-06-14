@@ -30,8 +30,8 @@ package Gnav_Info is
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    -- G-NAV system data
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   Core_Version       : String (1..2)  := "4A";
-   Service_Version    : String (1..4)  := (others => ' ');
+   Core_Version       : constant String (1..2)  := "4E";
+   Html_Version       : String (1..4)  := (others => ' ');
    Service_Name       : String (1..12) := (others => ' ');
    Startup_Time       : Times := No_Time;
    Home_Position      : Position_Record := No_Position_Record;

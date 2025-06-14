@@ -49,9 +49,9 @@ package body Display.Panels.Radio is
 
    Btn_All   : Button_Record;
 
-   Btn_10km  : Button_Record;
-
    Btn_20km  : Button_Record;
+
+   Btn_50km  : Button_Record;
 
    Btn_Air   : Button_Record;
 
@@ -94,17 +94,17 @@ package body Display.Panels.Radio is
       Allocation.W := (W - 0.025) / 4.0;
       Allocation.H := 0.08;
 
-      Btn_10km.Set_Allocation (Allocation);
-      Btn_10km.Set_Label ("10KM");
-      Btn_10km.Set_Font_Size (0.4, 0.3);
-      Btn_10km.Set_Style (Button_Normal);
-
-      Allocation.X := Allocation.X + Allocation.W + 0.005;
-
       Btn_20km.Set_Allocation (Allocation);
       Btn_20km.Set_Label ("20KM");
       Btn_20km.Set_Font_Size (0.4, 0.3);
-      Btn_10km.Set_Style (Button_Normal);
+      Btn_20km.Set_Style (Button_Normal);
+
+      Allocation.X := Allocation.X + Allocation.W + 0.005;
+
+      Btn_50km.Set_Allocation (Allocation);
+      Btn_50km.Set_Label ("50KM");
+      Btn_50km.Set_Font_Size (0.4, 0.3);
+      Btn_20km.Set_Style (Button_Normal);
 
       Allocation.X := Allocation.X + Allocation.W + 0.005;
 
@@ -169,11 +169,11 @@ package body Display.Panels.Radio is
 
             Line_Color := Line_White;
 
-         elsif Maps.Reference.Get_Distance_To_Station (R) <= 10 then
+         elsif Maps.Reference.Get_Distance_To_Station (R) <= 20 then
 
             Line_Color := Line_Green;
 
-         elsif Maps.Reference.Get_Distance_To_Station (R) <= 20 then
+         elsif Maps.Reference.Get_Distance_To_Station (R) <= 50 then
 
             Line_Color := Line_Yellow;
 
@@ -202,9 +202,9 @@ package body Display.Panels.Radio is
 
       Btn_All.Draw;
 
-      Btn_10km.Draw;
-
       Btn_20km.Draw;
+
+      Btn_50km.Draw;
 
       Btn_Air.Draw;
 
@@ -273,23 +273,23 @@ package body Display.Panels.Radio is
    procedure Screen_Pressed (X, Y : Float) is
    begin
 
-      if Btn_10km.Contains (X, Y) then
+      if Btn_20km.Contains (X, Y) then
 
          First_Row := 1;
          Filter    := 10;
-         Btn_10km.Set_Style (Button_Enabled);
-         Btn_20km.Set_Style (Button_Normal);
+         Btn_20km.Set_Style (Button_Enabled);
+         Btn_50km.Set_Style (Button_Normal);
          Btn_Air .Set_Style (Button_Normal);
          Btn_All .Set_Style (Button_Normal);
 
          Refresh := True;
 
-      elsif Btn_20km.Contains (X, Y) then
+      elsif Btn_50km.Contains (X, Y) then
 
          First_Row := 1;
          Filter    := 20;
-         Btn_10km.Set_Style (Button_Normal);
-         Btn_20km.Set_Style (Button_Enabled);
+         Btn_20km.Set_Style (Button_Normal);
+         Btn_50km.Set_Style (Button_Enabled);
          Btn_Air .Set_Style (Button_Normal);
          Btn_All .Set_Style (Button_Normal);
 
@@ -299,8 +299,8 @@ package body Display.Panels.Radio is
 
          First_Row := 1;
          Filter    := 0;
-         Btn_10km.Set_Style (Button_Normal);
          Btn_20km.Set_Style (Button_Normal);
+         Btn_50km.Set_Style (Button_Normal);
          Btn_Air .Set_Style (Button_Enabled);
          Btn_All .Set_Style (Button_Normal);
 
@@ -310,8 +310,8 @@ package body Display.Panels.Radio is
 
          First_Row := 1;
          Filter    := 100;
-         Btn_10km.Set_Style (Button_Normal);
          Btn_20km.Set_Style (Button_Normal);
+         Btn_50km.Set_Style (Button_Normal);
          Btn_Air .Set_Style (Button_Normal);
          Btn_All .Set_Style (Button_Enabled);
 

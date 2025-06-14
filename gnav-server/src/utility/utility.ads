@@ -148,7 +148,12 @@ package Utility is
    -- Returns the image of the floating point value
    --===========================================================================
    function Float_Image (Value : Float; Decimals : Natural) return String;
-
+   
+   --===========================================================================
+   -- Transforms the 8 hexa characters into a 4 bytes decimal
+   --===========================================================================
+   function Parse_Hex_Id (Value : String) return Natural;
+   
 private
    
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

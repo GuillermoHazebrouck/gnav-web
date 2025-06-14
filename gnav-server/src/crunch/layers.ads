@@ -150,7 +150,7 @@ private
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    package Layer_List is new Stacks.Generic_List (T_Record => Layer_Record,
                                                   T_Access => Layer_Access,
-                                                  Maximum  => 200);
+                                                  Maximum  => 500);
 
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    -- The collection of layers

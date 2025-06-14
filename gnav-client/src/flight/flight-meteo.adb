@@ -154,6 +154,8 @@ package body Flight.Meteo is
 
             Utility.Atmosphere.Set_Qnh (Float (Local.Qnh), True);
 
+            On_Local_Station_Changed.Trigger;
+
          end if;
 
       end if;
@@ -324,6 +326,8 @@ package body Flight.Meteo is
 
       if Gnav_Info.Request_Metar then
 
+         Send_Meteo_Request;
+
          Timing.Events.Register_Timer (Request_Period, Send_Meteo_Request'Access);
 
          Timing.Events.Register_Timer (Reposition_Period, Find_Closest_Station'Access);
@@ -345,6 +349,34 @@ package body Flight.Meteo is
       return Next_Metar /= No_Time and then Next_Metar - Cached_Time > No_Lapse;
 
    end Updated;
+   -----------------------------------------------------------------------------
+
+
+
+
+   --===========================================================================
+   -- (See specification file)
+   --===========================================================================
+   function Get_Station (S : Station_Range) return not null access Meteo_Station_Record is
+   begin
+
+      return Stations (S)'Access;
+
+   end Get_Station;
+   -----------------------------------------------------------------------------
+
+
+
+
+   --===========================================================================
+   -- (See specification file)
+   --===========================================================================
+   function Get_Local_Station return Station_Range is
+   begin
+
+      return Local_Station;
+
+   end Get_Local_Station;
    -----------------------------------------------------------------------------
 
 

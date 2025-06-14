@@ -221,6 +221,7 @@ package body Flight.Traffic is
             if N > Traffic_Data'Last then
                N := Traffic_Data'Last;
             end if;
+            Number_Of_Tracks := N;
 
             for I in 1..N loop
 
@@ -291,6 +292,9 @@ package body Flight.Traffic is
          end;
 
          Last_Update := Cached_Time;
+
+      else
+         Number_Of_Tracks := 0;
 
       end if;
 

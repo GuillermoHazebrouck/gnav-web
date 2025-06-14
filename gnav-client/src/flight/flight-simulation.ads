@@ -20,28 +20,31 @@
 
 -- Depencencies
 --//////////////////////////////////////////////////////////////////////////////
+-- Gnav
+with Interfaces;
 
 --//////////////////////////////////////////////////////////////////////////////
---
+-- This unit generates a simulated flight using the current turn rate as imput 
+-- variable and the a simulated atmosphere with dynamic thermals
 --//////////////////////////////////////////////////////////////////////////////
-package Layers.Airspaces is
-
+package Flight.Simulation is
+            
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   -- The selected turn rate
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   Selected_Turn_Rate : Float := 0.0;
+   
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   -- The selected airspeed (m/s)
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   Selected_Airspeed : Float := 25.0;
+   
    --===========================================================================
-   -- Loads the airspaces from an OpenAir file
+   -- Simulates the next trajectory point
    --===========================================================================
-   procedure Load_Open_Air_Files;
-
-   --===========================================================================
-   -- Generates the native G-NAV file
-   --===========================================================================
-   procedure Compile_Data;
-
+   procedure Next_Simulation_Step (Millis : Interfaces.IEEE_Float_64);
+  
 private
 
-   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   -- The collection of layers
-   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   Airspaces : Layer_List.Stack;
-
-end Layers.Airspaces;
+end Flight.Simulation;
 --------------------------------------------------------------------------------

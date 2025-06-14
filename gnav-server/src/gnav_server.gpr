@@ -16,7 +16,7 @@
 --  to http://www.gnu.org/licenses for a complete copy of the license.      --
 ------------------------------------------------------------------------------
 
-with "../aws_gnutls/aws_gnutls";
+with "../aws/aws_gnutls";
 
 project gnav_server is
 

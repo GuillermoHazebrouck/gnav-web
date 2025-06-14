@@ -58,7 +58,7 @@ package Maps.Terrain is
    --===========================================================================
    -- Indicates when the terrain is loaded
    --===========================================================================
-   On_Loaded : Utility.Events.Event_Stack;
+   On_Loaded : Utility.Events.Event_Stack (4);
 
 private
 

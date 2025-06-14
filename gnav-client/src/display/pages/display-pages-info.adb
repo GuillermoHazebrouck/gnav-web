@@ -20,73 +20,82 @@
 
 -- Depencencies
 --//////////////////////////////////////////////////////////////////////////////
-with Interfaces;
-use  Interfaces;
-
+-- Gnav
+with Display.Panels.Baro;
+with Display.Panels.Radio;
+with Display.Panels.Metar;
 
 --//////////////////////////////////////////////////////////////////////////////
 --
 --//////////////////////////////////////////////////////////////////////////////
-package body Utility.Notifications is
-
-   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   --
-   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   Cycle : Natural := 0;
-
-   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   --
-   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   Notify : array (Notification_Kinds) of Boolean := (Notify_Range => True, others => False);
-
+package body Display.Pages.Info is
+        
    --===========================================================================
-   -- (See specification file)
+   --
    --===========================================================================
-   procedure Add_Notification (Kind : Notification_Kinds) is
+   procedure Initialize is
    begin
 
-      Notify (Kind) := True;
-
-   end Add_Notification;
+      Display.Panels.Baro.Initialize  (0.01, 0.28);
+      
+      Display.Panels.Radio.Initialize (0.30, 0.01, 0.37, 0.850);
+      
+      Display.Panels.Metar.Initialize (0.68, 0.01, 0.31, 0.850);
+            
+   end Initialize;
    -----------------------------------------------------------------------------
-
-
-
-
+   
+   
+   
+   
    --===========================================================================
-   -- (See specification file)
+   --
    --===========================================================================
-   function Dequeue_Next return Interfaces.Unsigned_8 is
+   procedure Draw is
    begin
-
-      if Cycle = 0 then
-
-         for Kind in Notification_Kinds loop
-
-            if Notify (Kind) then
-
-               Notify (Kind) := False;
-
-               Cycle := 2;
-
-               case Kind is
-               when Notify_Sector => return 1;
-               when Notify_Sink   => return 2;
-               when Notify_Range  => return 3;
-               end case;
-
-            end if;
-
-         end loop;
-
-      else
-         Cycle := Cycle - 1;
-      end if;
-
-      return 0;
-
-   end Dequeue_Next;
+     
+      Display.Panels.Baro.Draw;
+      
+      Display.Panels.Radio.Draw;
+      
+      Display.Panels.Metar.Draw;
+      
+   end Draw;
    -----------------------------------------------------------------------------
-
-end Utility.Notifications;
+   
+   
+   
+   
+   --===========================================================================
+   --
+   --===========================================================================
+   procedure Screen_Pressed (X, Y : Float) is
+   begin
+    
+      Display.Panels.Baro.Screen_Pressed  (X, Y);
+      
+      Display.Panels.Radio.Screen_Pressed (X, Y);
+      
+      Display.Panels.Metar.Screen_Pressed (X, Y);
+      
+   end Screen_Pressed;
+   -----------------------------------------------------------------------------
+   
+   
+   
+   --===========================================================================
+   -- (See specifications file)
+   --===========================================================================
+   procedure Screen_Move (X, Y, Dx, Dy : Float; First : Boolean) is
+   begin
+      
+      Display.Panels.Radio.Screen_Move (X, Y, Dx, Dy, First);
+      
+      Display.Panels.Baro.Screen_Move (X, Y, Dx, Dy, First);
+      
+   end Screen_Move;
+   -----------------------------------------------------------------------------          
+     
+     
+end Display.Pages.Info;
 --------------------------------------------------------------------------------

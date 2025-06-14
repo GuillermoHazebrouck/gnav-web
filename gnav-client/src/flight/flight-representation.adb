@@ -317,7 +317,19 @@ package body Flight.Representation is
    -- (See specification file)
    --===========================================================================
    procedure Draw_Trajectory (View : Map_View_Record) is
+
+      Color : Color_Record;
+
    begin
+
+      if View.Show_Terrain then
+
+         Color := Color_Gray_2;
+
+      else
+         Color := Color_White;
+
+      end if;
 
       Check_Trajectory_Reset;
 
@@ -325,7 +337,7 @@ package body Flight.Representation is
 
       for I in Cluster_Range loop
 
-         Clusters (I).Draw (Color_Gray_2, 0.002 * View.Zoom);
+         Clusters (I).Draw (Color, 0.002 * View.Zoom);
 
       end loop;
 
@@ -500,7 +512,14 @@ package body Flight.Representation is
    procedure Draw_Airplane (View : Map_View_Record) is
    begin
 
-      Draw_Airplane (View, Flight.Data.Position, Flight.Data.Course);
+      if Flight.Data.Is_Valid (Field_Heading) then
+
+         Draw_Airplane (View, Flight.Data.Position, Flight.Data.Heading);
+
+      else
+         Draw_Airplane (View, Flight.Data.Position, Flight.Data.Course);
+
+      end if;
 
    end Draw_Airplane;
    -----------------------------------------------------------------------------
@@ -572,7 +591,7 @@ package body Flight.Representation is
                   N    : Float  := Float (Text'Length);
                begin
 
-                  Draw_Label (X, Y - 0.080, N * 0.011 + 0.008, 0.034, Color_Black);
+                  Draw_Label (X, Y - 0.080, N * 0.011 + 0.008, 0.04, Color_Black);
 
                   if    Traffic.Vario >  0.8 then
                      Line := Line_Green;

@@ -25,12 +25,15 @@ with Web.Window;
 with Web.HTML.Scripts;
 with Web.Strings;
 --Gnav
+with Display.Main;
 with Flight;
 with Flight.Plan;
 with Flight.Aircraft;
 with Flight.Meteo;
 with Flight.Register;
+with Flight.Simulation;
 with Flight.Traffic;
+with Flight.Wind;
 with Gnav_Info;
 with Glex;
 with Glex.Colors;
@@ -49,7 +52,6 @@ with Maps.Airspaces.Monitor;
 with Maps.Reference;
 with Maps.Terrain.Loader;
 with Maps.Layers;
-with Display.Menu;
 with Timing.Events;
 with Utility.Calendar;
 use  Utility.Calendar;
@@ -136,7 +138,7 @@ package body Gnav is
             --------------------------------------------------------------------
             elsif Key = "VERSION" then
 
-               Override (Gnav_Info.Service_Version, Val);
+               Override (Gnav_Info.Html_Version, Val);
 
             --------------------------------------------------------------------
             elsif Key = "TRAFFIC" then
@@ -210,15 +212,15 @@ package body Gnav is
             Color     => Glex.Colors.Line_Cyan,
             Alignment => Glex.Fonts.Alignment_CC);
 
-         S.Height    := 0.040;
-         S.Space     := 0.035;
-         S.Width     := 0.015;
+         S.Height    := 0.050;
+         S.Space     := 0.038;
+         S.Width     := 0.018;
          Glex.Fonts.Draw
            ("VERSION " & Gnav_Info.Core_Version,
             X         => 0.5,
             Y         => 0.1,
             Style     => S,
-            Color     => Glex.Colors.Line_Yellow,
+            Color     => Glex.Colors.Line_Cyan,
             Alignment => Glex.Fonts.Alignment_CC);
 
       end;
@@ -235,8 +237,9 @@ package body Gnav is
 
       Flight.Traffic.Initialize;
       Flight.Meteo.Initialize;
+      Flight.Wind.Read_Wind;
 
-      Display.Menu.Initialize;
+      Display.Main.Initialize;
       Display.Refresh := True;
 
    end Initialize_Gnav;
@@ -249,127 +252,6 @@ package body Gnav is
    --
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    Epoch : constant Times := Time_Of (1970, 1, 1, 0.0);
-
-
-
-
-   --===========================================================================
-   -- TODO: move this to "Flight.Simulation" package
-   A    : Long_Float := 0.0;
-   T    : Long_Float := 0.0;
-   Q    : Math.Vector2.Vector2_Record := Math.Vector2.No_Vector2_Record;
-   H    : Long_Float := 300.0;
-   Home : Maps.Position_Record := Gnav_Info.Home_Position;
-   -- Simulate a trajectory for development (1 second lapses)
-   -- The trajectory is a mix of turns and dives at different veritcal speeds
-   --===========================================================================
-   procedure Simulate_Trajectory (Millis : Interfaces.IEEE_Float_64) is
-
-      use Interfaces;
-      use Math.Vector2;
-      use Flight;
-      use Utility.Calendar;
-
-      P : Maps.Position_Record := Flight.Data.Position;
-      D : Long_Float := 0.2; -- km
-      R : Vector2_Record := New_Vector2_Record (1.0, 0.0);
-      S : Long_Float := 0.025; -- km/s
-      W : Vector2_Record := New_Vector2_Record (0.001, 0.003);
-      C : Long_Float := 0.0;
-      Z : Long_Float := 2.5;
-
-   begin
-
-      if Gnav_Info.Simulation_Reset then
-
-         Home := Flight.Plan.Home_Waypoint.Position;
-         A    := 0.0;
-         T    := 0.0;
-         H    := Long_Float (200.0 + Maps.Terrain.Get_Elevation (Home));
-         Q    := Math.Vector2.No_Vector2_Record;
-
-         Gnav_Info.Simulation_Reset := False;
-
-      end if;
-
-      W.Normalize;
-
-      -- Thermal
-      ----------------------
-      if T < 150.0 then
-
-         A := A + S / (0.5 * D);
-
-         if A >= Math.TwoPi then
-            A := Math.TwoPi - A;
-         end if;
-
-      -- Restart cycle
-      ----------------------
-      elsif T > 300.0 then
-
-         T :=  0.0;
-
-      -- Dive
-      ----------------------
-      else
-         Z := -1.2;
-
-      end if;
-
-      R.Rotate (A);
-
-      Q := Q + S * R; -- + W;
-
-      C := 90.0 - A * 180.0 / Math.Pi;
-
-      if C >= 360.0 then
-         C := C - 360.0;
-      elsif C < 0.0 then
-         C := C + 360.0;
-      end if;
-
-      P := Maps.Position (Home, Q);
-
-      H := H + Z;
-
-      T := T + 1.0;
-
-      Flight.Data.Timestamp := Cached_Time;
-
-      Flight.Data.Origin := (others => Update_None);
-
-      Flight.Data.Position := P;
-      Flight.Data.Ages   (Field_Position) := Cached_Time;
-      Flight.Data.Origin (Field_Position) := Update_External;
-
-      Flight.Data.Altitude := Float (H);
-      Flight.Data.Ages   (Field_Altitude) := Cached_Time;
-      Flight.Data.Origin (Field_Altitude) := Update_External;
-
-      Flight.Data.Speed := Float (1000.0 * S);
-      Flight.Data.Ages   (Field_Speed) := Cached_Time;
-      Flight.Data.Origin (Field_Speed) := Update_External;
-
-      Flight.Data.Course := Float (C);
-      Flight.Data.Ages   (Field_Course) := Cached_Time;
-      Flight.Data.Origin (Field_Course) := Update_External;
-
-      Flight.Complete_Data;
-
-      if Flight.Data.Is_Valid (Field_Position) then
-         if Flight.Data.Is_Valid (Field_Altitude) then
-            Maps.Airspaces.Monitor.Process_Location (Flight.Data.Position, Data.Altitude);
-         end if;
-         Maps.Reference.Update_Distance_To_Airfields (Flight.Data.Position);
-      end if;
-
-      Flight.Cache_Data;
-
-      Flight.Register.Update;
-
-   end Simulate_Trajectory;
-   -----------------------------------------------------------------------------
 
 
 
@@ -388,7 +270,9 @@ package body Gnav is
       Utility.Calendar.Cache_Time (Epoch + Lapse);
 
       if Gnav_Info.Simulation_Mode then
-         Simulate_Trajectory (Millis);
+
+         Flight.Simulation.Next_Simulation_Step (Millis);
+
       end if;
 
    end Gnav_Cache_Time;
@@ -494,7 +378,7 @@ package body Gnav is
 
          Glex.Clear_Screen;
 
-         Display.Menu.Draw;
+         Display.Main.Draw;
 
       end if;
 
@@ -542,7 +426,7 @@ package body Gnav is
 
       end if;
 
-      Display.Menu.Screen_Pressed (Mouse_X, Mouse_Y);
+      Display.Main.Screen_Pressed (Mouse_X, Mouse_Y);
 
    end Gnav_Touch;
    -----------------------------------------------------------------------------
@@ -638,7 +522,7 @@ package body Gnav is
 
          end if;
 
-         Display.Menu.Screen_Move (First_Down_X,
+         Display.Main.Screen_Move (First_Down_X,
                                    First_Down_Y,
                                    Mouse_X - First_Down_X,
                                    Mouse_Y - First_Down_Y,
@@ -663,7 +547,7 @@ package body Gnav is
 
       if not Moving and T - Down_Time < 200.0 then
 
-         Display.Menu.Screen_Pressed (First_Down_X, First_Down_Y);
+         Display.Main.Screen_Pressed (First_Down_X, First_Down_Y);
 
       end if;
 

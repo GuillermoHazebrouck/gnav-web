@@ -55,13 +55,17 @@ package body Display.Pages.Wind is
    -- Speed adaptation
    ---------------------------
    
-   Btn_Plus   : Button_Record;
+   Btn_Plus_1   : Button_Record;
    
-   Btn_Less   : Button_Record;
+   Btn_Less_1   : Button_Record;
    
-   Btn_Manual : Button_Record;
+   Btn_Plus_10  : Button_Record;
    
-   Btn_Auto   : Button_Record;
+   Btn_Less_10  : Button_Record;
+   
+   Btn_Manual   : Button_Record;
+   
+   Btn_Auto     : Button_Record;
    
    -- Arrows
    ---------------------------
@@ -172,30 +176,55 @@ package body Display.Pages.Wind is
 
       -- Buttons
       
-      Btn_Plus.Set_Label ("+");
+      Btn_Plus_1.Set_Label ("+1");
 
-      Btn_Plus.Set_Style (Button_Action);
+      Btn_Plus_1.Set_Style (Button_Action);
       
-      Btn_Plus.Set_Font_Size (0.5, 0.5);
+      Btn_Plus_1.Set_Font_Size (0.3, 0.3, 0.2);
 
-      A.X := 0.80;
+      A.X := 0.70;
       A.W := 0.10;
-      A.Y := 0.57;
+      A.Y := 0.67;
       A.H := 0.16;
 
-      Btn_Plus.Set_Allocation (A);
+      Btn_Plus_1.Set_Allocation (A);
 
       --
 
-      Btn_Less.Set_Label ("-");
+      Btn_Plus_10.Set_Label ("+10");
 
-      Btn_Less.Set_Style (Button_Action);
+      Btn_Plus_10.Set_Style (Button_Action);
       
-      Btn_Less.Set_Font_Size (0.5, 0.5);
+      Btn_Plus_10.Set_Font_Size (0.3, 0.3, 0.2);
+      
+      A.X := 0.85;
+      
+      Btn_Plus_10.Set_Allocation (A);
+      
+      --
 
-      A.Y := A.Y - 0.3;
+      Btn_Less_1.Set_Label ("-1");
 
-      Btn_Less.Set_Allocation (A);
+      Btn_Less_1.Set_Style (Button_Action);
+      
+      Btn_Less_1.Set_Font_Size (0.3, 0.3, 0.2);
+
+      A.X := 0.70;
+      A.Y := 0.17;
+
+      Btn_Less_1.Set_Allocation (A);
+      
+      --
+
+      Btn_Less_10.Set_Label ("-10");
+
+      Btn_Less_10.Set_Style (Button_Action);
+      
+      Btn_Less_10.Set_Font_Size (0.3, 0.3, 0.2);
+
+      A.X := 0.85;
+      
+      Btn_Less_10.Set_Allocation (A);
       
       --
 
@@ -380,9 +409,13 @@ package body Display.Pages.Wind is
             -- +/- buttons
             --------------------------------------------------------------------
       
-            Btn_Plus.Draw;
+            Btn_Plus_1.Draw;
       
-            Btn_Less.Draw;
+            Btn_Less_1.Draw;
+      
+            Btn_Plus_10.Draw;
+      
+            Btn_Less_10.Draw;
       
          when Wind_Source_Computation | Wind_Source_Metar =>
             
@@ -397,14 +430,14 @@ package body Display.Pages.Wind is
       end case;
       
       Glex.Fonts.Draw (Float_Image (Wind, 0),
-                       0.85,
+                       0.75,
                        0.50,
                        Font_1,
                        Line_Cyan,
                        Alignment_CC);
 
       Glex.Fonts.Draw ("KM/H",
-                       0.94,
+                       0.84,
                        0.50,
                        Font_2,
                        Line_Grass,
@@ -424,11 +457,12 @@ package body Display.Pages.Wind is
       
       use Math.Vector2;
       
-      Step   : constant Long_Float := 1.0 / 3.6;
-      Wind   : Vector2_Record := Flight.Data.Wind;
-      Norm   : Long_Float     := Flight.Data.Wind.Norm2;    
-      Aspect : Long_Float     := Long_Float (Glex.Aspect);
-      Manual : Boolean        := False;
+      Step_1  : constant Long_Float :=  1.0 / 3.6;
+      Step_10 : constant Long_Float := 10.0 / 3.6;
+      Wind    : Vector2_Record := Flight.Data.Wind;
+      Norm    : Long_Float     := Flight.Data.Wind.Norm2;    
+      Aspect  : Long_Float     := Long_Float (Glex.Aspect);
+      Manual  : Boolean        := False;
       
    begin
       
@@ -446,13 +480,13 @@ package body Display.Pages.Wind is
       
       elsif Flight.Wind.Get_Source = Wind_Source_Manual then
       
-         if Btn_Less.Contains (X, Y) then
+         if Btn_Less_1.Contains (X, Y) then
          
-            if Norm > Step then
+            if Norm > Step_1 then
             
                Wind.Normalize;
       
-               Wind.Scale (Norm - Step);
+               Wind.Scale (Norm - Step_1);
          
             else
             
@@ -462,17 +496,49 @@ package body Display.Pages.Wind is
          
             Manual := True;
             
-         elsif Btn_Plus.Contains (X, Y) then
+         elsif Btn_Plus_1.Contains (X, Y) then
          
             if Norm > 0.0 then
             
                Wind.Normalize;
       
-               Wind.Scale (Norm + Step);
+               Wind.Scale (Norm + Step_1);
          
             else
             
-               Wind.Set (0.0,-Step);
+               Wind.Set (0.0, -Step_1);
+            
+            end if;
+         
+            Manual := True;
+               
+         elsif Btn_Less_10.Contains (X, Y) then
+         
+            if Norm > Step_10 then
+            
+               Wind.Normalize;
+      
+               Wind.Scale (Norm - Step_10);
+         
+            else
+            
+               Wind.Set (0.0, 0.0);
+            
+            end if;
+         
+            Manual := True;
+                    
+         elsif Btn_Plus_10.Contains (X, Y) then
+         
+            if Norm > 0.0 then
+            
+               Wind.Normalize;
+      
+               Wind.Scale (Norm + Step_10);
+         
+            else
+            
+               Wind.Set (0.0, -Step_10);
             
             end if;
          

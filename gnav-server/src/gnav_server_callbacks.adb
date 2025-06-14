@@ -62,69 +62,12 @@ package body Gnav_Server_Callbacks is
                                                         Count => 0));
 
    --===========================================================================
-   -- TODO: open file only once
-   --===========================================================================
-   procedure Log_User_Data (Id : Utility.Ids.Id_Type; Track_Data : String) is
-   begin
-
-      -- Log the track data (this is optional for the client)
-      --------------------------------------------------------------------------
-      if Track_Data'Length > 0 and then Track_Data (Track_Data'First) = 'B' then
-
-         declare
-            use Ada.Text_IO;
-            use Ada.Calendar;
-            Today    : String := Ada.Calendar.Formatting.Image (Clock);
-            Hour     : String := Today (12..Today'Last);
-            Log_Path : String := "files/users/" & Id;
-            Log_Name : String := Log_Path & "/" & Today (1..10) & ".igc";
-            File_Id  : File_Type;
-         begin
-
-            if not Ada.Directories.Exists (Log_Path) then
-               Ada.Directories.Create_Directory (Log_Path);
-            end if;
-
-            if not Ada.Directories.Exists (Log_Name) then
-
-               Create (File_Id, Out_File, Log_Name);
-
-               -- Write the IGC header
-               --------------------------------------------------------
-               Put_Line (File_Id, "AGNVV2A");
-               Put_Line (File_Id, "HFDTE" & Today (3..4) & Today (6..7) & Today (9..10)); -- YYMMDD
-               Put_Line (File_Id, "HFDTM100GPSDATUM:WGS-1984");
-               Put_Line (File_Id, "HFFTYFRTYPE:G-NAV");
-               Put_Line (File_Id, "I023638GSP3941HDT"); -- TODO: change HDT
-
-            else
-               Open (File_Id, Append_File, Log_Name);
-
-            end if;
-
-            -- Write the data in IGC format
-            ------------------------------------------------------------
-            Put_Line (File_Id, Track_Data);
-
-            Close (File_Id);
-
-         end;
-
-      end if;
-
-   end Log_User_Data;
-   -----------------------------------------------------------------------------
-
-
-
-
-   --===========================================================================
    -- Adds the user to the list and removes old users
    --===========================================================================
    procedure Log_User (Id : Utility.Ids.Id_Type; Track_Data : String) is
    begin
 
-      Log_User_Data (Id, Track_Data);
+      Traffic.Log_Track_Data (Id, Track_Data);
 
       -- Update as existing user
       ------------------------------------------------
@@ -258,6 +201,24 @@ package body Gnav_Server_Callbacks is
 
          Answer := Response.File (Content_Type => "text/javascript",
                                   Filename     => "files/gnav_sw.js");
+
+      --------------------------------------------------------------------------
+      -- Sounds
+      --------------------------------------------------------------------------
+      elsif Content = "/bweep.wav" then
+
+         Answer := Response.File (Content_Type => "application/octet-stream",
+                                  Filename     => "files/sounds/bweep.wav");
+
+      elsif Content = "/alert.wav" then
+
+         Answer := Response.File (Content_Type => "application/octet-stream",
+                                  Filename     => "files/sounds/alert.wav");
+
+      elsif Content = "/atent.wav" then
+
+         Answer := Response.File (Content_Type => "application/octet-stream",
+                                  Filename     => "files/sounds/atent.wav");
 
       --------------------------------------------------------------------------
       -- Maps

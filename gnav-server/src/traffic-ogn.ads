@@ -20,28 +20,37 @@
 
 -- Depencencies
 --//////////////////////////////////////////////////////////////////////////////
+with Ada.Streams;
+use  Ada.Streams;
+with Utility.Maps;
+use  Utility.Maps;
 
 --//////////////////////////////////////////////////////////////////////////////
---
+-- This package provides OGN tracks in the traffic stack
 --//////////////////////////////////////////////////////////////////////////////
-package Layers.Airspaces is
+package Traffic.Ogn is
 
    --===========================================================================
-   -- Loads the airspaces from an OpenAir file
+   -- Starts consuming OGN tracks within the configured region
    --===========================================================================
-   procedure Load_Open_Air_Files;
-
-   --===========================================================================
-   -- Generates the native G-NAV file
-   --===========================================================================
-   procedure Compile_Data;
+   procedure Start_Updating;
 
 private
+   
+   --===========================================================================
+   -- Consumes OGN tracks within the configured region until there is a problem
+   -- or disconnection.
+   --===========================================================================
+   procedure Update_Tracks;
 
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   -- The collection of layers
+   --
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   Airspaces : Layer_List.Stack;
-
-end Layers.Airspaces;
+   task Maintain_Tracks is
+      
+      entry Start;
+   
+   end Maintain_Tracks;
+   
+end Traffic.Ogn;
 --------------------------------------------------------------------------------

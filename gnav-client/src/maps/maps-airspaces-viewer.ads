@@ -143,9 +143,9 @@ private
       Focus  : Natural := 0;
 
       Pages  : Page_Array := (others => (others => (Index  => 0,
-                                                   Scale  => 0.0,
-                                                   Area   => (0.0, 0.0, 0.0, 0.0),
-                                                   Inside => False)));
+                                                    Scale  => 0.0,
+                                                    Area   => (0.0, 0.0, 0.0, 0.0),
+                                                    Inside => False)));
       Count  : Natural := 0;
 
       Panel  : Widget_Record;

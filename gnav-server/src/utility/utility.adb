@@ -662,5 +662,60 @@ package body Utility is
    end Float_Image;
    -----------------------------------------------------------------------------
 
+
+
+
+   --===========================================================================
+   -- Transforms the 8 hexa characters into a 4 bytes decimal
+   --===========================================================================
+   function Parse_Hex_Id (Value : String) return Natural is
+
+      B : Natural := 0;
+      E : Natural := 1;
+      R : Natural := 0;
+
+   begin
+
+      if Value'Length > 8 then
+         return 0;
+      end if;
+
+      for C of reverse Value loop
+
+         E := 16 ** B;
+
+         case C is
+            when '0' => null;
+            when '1' => R := R + 1  * E;
+            when '2' => R := R + 2  * E;
+            when '3' => R := R + 3  * E;
+            when '4' => R := R + 4  * E;
+            when '5' => R := R + 5  * E;
+            when '6' => R := R + 6  * E;
+            when '7' => R := R + 7  * E;
+            when '8' => R := R + 8  * E;
+            when '9' => R := R + 9  * E;
+            when 'A' => R := R + 10 * E;
+            when 'B' => R := R + 11 * E;
+            when 'C' => R := R + 12 * E;
+            when 'D' => R := R + 13 * E;
+            when 'E' => R := R + 14 * E;
+            when 'F' => R := R + 15 * E;
+            when others =>
+               -- Invalid
+               return 0;
+         end case;
+
+         B := B + 1;
+
+      end loop;
+
+      return R;
+
+   end Parse_Hex_Id;
+   -----------------------------------------------------------------------------
+
+
+
 end Utility;
 --------------------------------------------------------------------------------

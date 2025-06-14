@@ -45,6 +45,7 @@ package body Utility.Log is
    begin
 
       if not Log_On_Files then
+         Ada.Text_IO.Put_Line (Message);
          return;
       end if;
 
@@ -99,6 +100,7 @@ package body Utility.Log is
    begin
 
       if not Log_On_Files then
+         Ada.Text_IO.Put_Line ("error: " & Message);
          return;
       end if;
 
@@ -151,6 +153,7 @@ package body Utility.Log is
    begin
 
       if not Log_On_Files then
+         Ada.Text_IO.Put_Line ("error: " & Message);
          return;
       end if;
 

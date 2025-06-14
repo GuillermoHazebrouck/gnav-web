@@ -517,11 +517,15 @@ package body Maps.Reference is
 
             View.Position_To_Screen (Airfield.Position, X, Y);
 
-            Glex.Fonts.Draw (Trim (Airfield.Id),
-                             X, Y + 0.025,
-                             Fonts (Reference_Airfield),
-                             Lines (Reference_Airfield),
-                             Alignment_LC);
+            if Airfield.Id (1) /= '-' then
+
+               Glex.Fonts.Draw (Airfield.Id,
+                                X, Y + 0.025,
+                                Fonts (Reference_Airfield),
+                                Lines (Reference_Airfield),
+                                Alignment_LC);
+
+            end if;
 
             Glex.Symbols.Draw (Glex.Symbols.Diamond,
                                X, Y,

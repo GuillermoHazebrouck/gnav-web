@@ -40,11 +40,10 @@
 
     <!-- G-NAV SERVICE INFORMATION -->
     <script id="service-info" type="not-javascript">
-      VERSION=V1.0;
+      VERSION=4E;
       NAME=VZP-PHOENIX;
       HOME=EBGG;
       LOCATION=N50*45'14.3" E3*51'45.5";
-      UTC_OFFSET=1;
       TRAFFIC=TRUE;
       METAR=TRUE;
       APRS_AIRBORNE_ONLY=FALSE;
@@ -55,7 +54,7 @@
       import * as AdaWebPack from './adawebpack.mjs';
       (async () => {
         const fetchPromise = fetch('main.wasm');
-        const { instance } = await WebAssembly.instantiateStreaming(fetchPromise, {env: AdaWebPack.imports});
+        const {instance} = await WebAssembly.instantiateStreaming(fetchPromise, {env: AdaWebPack.imports});
         AdaWebPack.initialize(instance);
         instance.exports['_ada_main']();
         window.AWP = instance;
@@ -64,6 +63,8 @@
 
   </head>
   <body>
+
+    <!-- WebGL canvas object -->
     <canvas id='glcanvas' width="720px" height="1400px"></canvas>
 
     <!-- G-NAV DRIVING SCRIPT -->
@@ -75,36 +76,34 @@
 
         // Notification sounds
         //------------------------------------------------------
-        const context = new AudioContext();
+        const audioContext = new AudioContext();
 
-        function playBip1() //-> sector incrusion/excursion
+        const audioBweepElement = new Audio("bweep.wav");
+        const audioBweepTrack   = audioContext.createMediaElementSource(audioBweepElement);
+
+        const audioAtentElement = new Audio("atent.wav");
+        const audioAtentTrack   = audioContext.createMediaElementSource(audioAtentElement);
+
+        const audioAlertElement = new Audio("alert.wav");
+        const audioAlertTrack   = audioContext.createMediaElementSource(audioAlertElement);
+
+        function playBweep()
         {
-          const oscillator = context.createOscillator();
-          oscillator.frequency.value = 800;
-          oscillator.connect(context.destination);
-          oscillator.start();
-          oscillator.stop(context.currentTime + 0.20);
+          audioBweepTrack.connect(audioContext.destination);
+          audioBweepElement.play();
         }
 
-        function playBip2() //-> MC too optimistic
+        function playAtent()
         {
-          const oscillator = context.createOscillator();
-          oscillator.frequency.value = 500;
-          oscillator.connect(context.destination);
-          oscillator.start();
-          oscillator.stop(context.currentTime + 0.20);
+          audioAtentTrack.connect(audioContext.destination);
+          audioAtentElement.play();
         }
 
-        function playBip3() //-> home is below safety height
+        function playAlert()
         {
-          const oscillator = context.createOscillator();
-          oscillator.frequency.value = 700;
-          oscillator.connect(context.destination);
-          oscillator.start();
-          oscillator.stop(context.currentTime + 0.80);
+          audioAlertTrack.connect(audioContext.destination);
+          audioAlertElement.play();
         }
-
-        playBip3();
 
         // Request screen lock while visible
         //------------------------------------------------------
@@ -140,6 +139,7 @@
         //-Mouse------------------------------------------------
         var Mouse_Down = function(e)
         {
+            if (!window.AWP) {return false};
             e.preventDefault();
             window.AWP.exports.Gnav_Touch_Start (e.pageX / Canvas.clientWidth,
                                                  e.pageY / Canvas.clientHeight,
@@ -150,6 +150,7 @@
 
         var Mouse_Move = function(e)
         {
+            if (!window.AWP) {return false};
             e.preventDefault();
             window.AWP.exports.Gnav_Touch_Move (e.pageX / Canvas.clientWidth,
                                                 e.pageY / Canvas.clientHeight,
@@ -161,6 +162,7 @@
 
         var Mouse_Up = function(e)
         {
+            if (!window.AWP) {return false};
             e.preventDefault();
             window.AWP.exports.Gnav_Touch_End (e.timeStamp);
             window.requestAnimationFrame (window.AWP.exports.Gnav_Refresh_Screen);
@@ -171,6 +173,7 @@
         //-Touch------------------------------------------------
         var Touch_Start = function(e)
         {
+            if (!window.AWP) {return false};
             e.preventDefault();
             window.AWP.exports.Gnav_Touch_Start (e.touches[0].pageX / Canvas.clientWidth,
                                                  e.touches[0].pageY / Canvas.clientHeight,
@@ -181,6 +184,7 @@
 
         var Touch_Move = function(e)
         {
+            if (!window.AWP) {return false};
             e.preventDefault();
             window.AWP.exports.Gnav_Touch_Move (e.touches[0].pageX / Canvas.clientWidth,
                                                 e.touches[0].pageY / Canvas.clientHeight,
@@ -192,6 +196,7 @@
 
         var Touch_End = function(e)
         {
+            if (!window.AWP) {return false};
             e.preventDefault();
             window.AWP.exports.Gnav_Touch_End (e.timeStamp);
             window.requestAnimationFrame (window.AWP.exports.Gnav_Refresh_Screen);
@@ -222,6 +227,7 @@
 
         function loadPosition(position)
         {
+          if (!window.AWP) {return false};
           if (!document.hidden) {
             window.AWP.exports.Gnav_Set_Gnss_Data (Date.now(),
                                                   position.coords.latitude,
@@ -238,14 +244,14 @@
         const Timer_Id = window.setInterval(Main_Timer, 1000);
         function Main_Timer()
         {
-          if (!document.hidden) {
+          if (!document.hidden && window.AWP) {
             window.AWP.exports.Gnav_Update_Size (Canvas.clientWidth, Canvas.clientHeight);
             window.AWP.exports.Gnav_Cache_Time (Date.now());
             window.AWP.exports.Gnav_Process_Timer();
             const Code_Id = window.AWP.exports.Gnav_Notification_Request();
-            if      (Code_Id === 1) { playBip1() }
-            else if (Code_Id === 2) { playBip2() }
-            else if (Code_Id === 3) { playBip3() }
+            if      (Code_Id === 1) { playBweep(); } //-> sector incrusion/excursion
+            else if (Code_Id === 2) { playAtent(); } //-> MC too optimistic
+            else if (Code_Id === 3) { playAlert(); } //-> home is below safety height
             window.requestAnimationFrame (window.AWP.exports.Gnav_Refresh_Screen);
           }
         }

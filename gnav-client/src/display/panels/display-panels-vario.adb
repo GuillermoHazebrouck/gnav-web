@@ -49,6 +49,12 @@ package body Display.Panels.Vario is
                                              Space     => 0.008,
                                              Rendering => Glex.Fonts.Font_Simple,
                                              Thickness => Glex.Fonts.Font_Regular);
+        
+   Font_2 : Glex.Fonts.Font_Style_Record := (Width     => 0.014,
+                                             Height    => 0.040,
+                                             Space     => 0.008,
+                                             Rendering => Glex.Fonts.Font_Simple,
+                                             Thickness => Glex.Fonts.Font_Regular);
 
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    --
@@ -457,6 +463,16 @@ package body Display.Panels.Vario is
       Block.Set_Background_Color (Color_Yellow);
       Block.Draw;
       
+      -- Meassured ratio
+      --------------------------------------------------------------------------
+      
+      Glex.Fonts.Draw (Integer_Image (Flight.Register.Get_Meassured_Gliding_Ratio) & ":1",
+                       Pnl_Log.Get_Allocation.X + Pnl_Log.Get_Allocation.W - 0.13, 
+                       Pnl_Log.Get_Allocation.Y + 0.04,
+                       Font_2,
+                       Line_Yellow, Alignment_LR);
+      
+            
    end Draw;
    -----------------------------------------------------------------------------
    

@@ -32,6 +32,7 @@ with Flight.Plan;
 with Flight.Register;
 with Flight.Representation;
 with Flight.Traffic;
+with Flight.Simulation;
 with Glex;
 with Glex.Basic;
 with Glex.Colors;
@@ -657,6 +658,8 @@ package body Display.Pages.Navigation is
 
    begin
       
+      View.Cone_Margin := Flight.Safety_Height;
+      
       -- Map
       --------------------------------------------------------------------------
       
@@ -1165,6 +1168,12 @@ package body Display.Pages.Navigation is
             
          end if;
          
+         if Gnav_Info.Simulation_Mode and then X in 0.82..1.0 and then Y in 0.2..0.45 then
+            
+            Flight.Simulation.Selected_Turn_Rate := Float'Max (-17.0, Float'Min (17.0, Flight.Simulation.Selected_Turn_Rate - 15.0 * Dx));
+            
+         end if;
+         
       end if;
 
    end Screen_Move;
@@ -1183,6 +1192,6 @@ package body Display.Pages.Navigation is
       
    end Get_Map_View;
    -----------------------------------------------------------------------------
-   
+      
 end Display.Pages.Navigation;
 --------------------------------------------------------------------------------
