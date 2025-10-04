@@ -1,9 +1,12 @@
-const cacheName = "2A1";
+const cacheName = "4C4";
 const precachedResources = ["/",
                             "/index.html",
                             "/main.wasm",
                             "/adawebpack.mjs",
                             "/manifest.json",
+                            "/bweep.wav",
+                            "/atent.wav",
+                            "/alert.wav",
                             "/traffic.bin",
                             "/metar.bin",
                             "/terrain_1.bin",
