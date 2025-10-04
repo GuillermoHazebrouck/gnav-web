@@ -510,7 +510,23 @@ package body Flight.Plan is
          -- Status flags
          -----------------------------------------------------------------------
 
-         Wpt.In_Proximity := Maps.Distance (Flight.Data.Position, Wpt.Position) < Proximity_Threshold;
+         case Wpt.Kind is
+
+            when Waypoint_Cylinder =>
+
+               Wpt.In_Proximity := Maps.Distance (Flight.Data.Position, Wpt.Position) < Wpt.Radius;
+
+            when Waypoint_Arc =>
+
+               if Maps.Distance (Flight.Data.Position, Wpt.Position) < Wpt.Radius then
+
+                  -- TODO: check if inside the arc
+
+                  Wpt.In_Proximity := True;
+
+               end if;
+
+         end case;
 
          Wpt.Visited      := Plan.Waypoints (W).Visited or else Wpt.In_Proximity;
 
@@ -545,15 +561,27 @@ package body Flight.Plan is
 
       if Jump_In_Proximity and Plan.Waypoints (Plan.Target).In_Proximity then
 
-         if not Plan.Go_Back then
+         declare
+            Previous_Target : Waypoint_Range := Flight_Plan.Target;
+         begin
 
-            Goto_Next_Waypoint;
+            if not Plan.Go_Back then
 
-         else
+               Goto_Next_Waypoint;
 
-            Goto_Previous_Waypoint;
+            else
 
-         end if;
+               Goto_Previous_Waypoint;
+
+            end if;
+
+            if Flight_Plan.Target /= Previous_Target then
+
+               Utility.Notifications.Add_Notification (Utility.Notifications.Notify_Waypoint);
+
+            end if;
+
+         end;
 
       end if;
 

@@ -21,6 +21,7 @@
 -- Depencencies
 --//////////////////////////////////////////////////////////////////////////////
 with Utility.Log;
+with Utility.Notifications;
 with Maps.Terrain;
 
 
@@ -188,9 +189,10 @@ package body Flight is
 
 
 
-
+   Below_100m : Boolean := False;
    --===========================================================================
-   -- Compute elevation from position and altitude.
+   -- Compute elevation from position and altitude and generate notification
+   -- when above 100m.
    -- NOTE: we do not report negative values, which are clearly wrong.
    --===========================================================================
    procedure Compute_Elevation is
@@ -212,6 +214,20 @@ package body Flight is
                Data.Ages   (Field_Elevation) := Data.Timestamp;
 
                Data.Origin (Field_Elevation) := Update_Internal;
+
+               -- 100m notification
+               -------------------------------------------------
+               if Below_100m and Data.Elevation > 100.0 then
+
+                  Utility.Notifications.Add_Notification (Utility.Notifications.Notify_100m);
+
+                  Below_100m := False;
+
+               elsif Data.Elevation < 90.0 then
+
+                  Below_100m := True;
+
+               end if;
 
             end if;
 
@@ -761,7 +777,7 @@ package body Flight is
 
       if Zone in -12..12 then
 
-         Utc_Offset := One_Hour + Lapse_Of (Float (3600 * Zone));
+         Utc_Offset := Lapse_Of (Float (3600 * Zone));
 
       end if;
 
@@ -777,7 +793,7 @@ package body Flight is
    function Get_Time_Zone return Integer is
    begin
 
-      return Integer (Seconds (Utc_Offset) / 3600.0);
+      return Integer (Hours (Utc_Offset));
 
    end Get_Time_Zone;
    -----------------------------------------------------------------------------

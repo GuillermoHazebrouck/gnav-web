@@ -26,6 +26,7 @@ use  Flight.Aircraft;
 with Glex.Colors;
 use  Glex.Colors;
 with Glex.Fonts;
+with Glex.Symbols;
 with Widgets.Button;
 use  Widgets.Button;
 with Widgets.Panel;
@@ -66,6 +67,12 @@ package body Display.Pages.Glider is
                                              Rendering => Glex.Fonts.Font_Glow,
                                              Thickness => Glex.Fonts.Font_Regular);
 
+   Font_4 : Glex.Fonts.Font_Style_Record := (Width     => 0.008,
+                                             Height    => 0.025,
+                                             Space     => 0.004,
+                                             Rendering => Glex.Fonts.Font_Simple,
+                                             Thickness => Glex.Fonts.Font_Thin);
+
    M : constant Dimension_Float := 0.01;
    H : constant Dimension_Float := 0.10;
    W : constant Dimension_Float := 0.15;
@@ -73,13 +80,11 @@ package body Display.Pages.Glider is
    -- Page widgets
    ---------------------------------
 
-   Btn_Model  : Button_Record;
-
-   Btn_Mass   : Button_Record;
-
    Btn_Next   : Button_Record;
 
    Pnl_Mass   : Panel_Record;
+
+   Pnl_Load   : Panel_Record;
 
    Pnl_Info   : Panel_Record;
 
@@ -97,27 +102,22 @@ package body Display.Pages.Glider is
    --
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    Drag_Slider_Range : constant Float := 1.20;
-   Drag_Slider_Min   : constant Float := 0.18;
+   Drag_Slider_Min   : constant Float := 0.09;
    Drag_Slider_Max   : constant Float := 0.73;
    Drag_Slider_Delta : constant Float := Drag_Slider_Max - Drag_Slider_Min;
 
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    --
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   type Mass_Control is record
-
-      Btn_Mass : Button_Record;
-
-      Btn_Plus : Button_Record;
-
-      Btn_Less : Button_Record;
-
-   end record;
+   Mass_Slider_Range : constant Float := 150.0;
+   Mass_Slider_Min   : constant Float := 0.09;
+   Mass_Slider_Max   : constant Float := 0.73;
+   Mass_Slider_Delta : constant Float := Mass_Slider_Max - Mass_Slider_Min;
 
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    --
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   Mass_Controls : array (Mass_Point_Range) of Mass_Control;
+   Mass_Controls : array (Mass_Point_Range) of Button_Record;
 
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    --
@@ -138,10 +138,10 @@ package body Display.Pages.Glider is
       -- Info panel
       ------------------------------------------------------
 
-      Allocation.X := 0.58;
+      Allocation.X := 0.52;
       Allocation.Y := 0.01;
       Allocation.H := 0.85;
-      Allocation.W := 0.41;
+      Allocation.W := 0.47;
 
       Pnl_Info.Set_Allocation (Allocation);
 
@@ -159,7 +159,7 @@ package body Display.Pages.Glider is
       Allocation.X := 0.01;
       Allocation.Y := 0.01;
       Allocation.H := 0.85;
-      Allocation.W := 0.56;
+      Allocation.W := 0.50;
 
       Pnl_Mass.Set_Allocation (Allocation);
 
@@ -171,12 +171,30 @@ package body Display.Pages.Glider is
 
       Pnl_Mass.Set_Label ("MASS");
 
+      -- Load panel
+      ------------------------------------------------------
+
+      Allocation.X := 0.40;
+      Allocation.Y := 0.04;
+      Allocation.H := 0.76;
+      Allocation.W := 0.09;
+
+      Pnl_Load.Set_Allocation (Allocation);
+
+      Pnl_Load.Set_Background_Color (Color_Gray_3);
+
+      Pnl_Load.Set_Font_Size (0.03, 0.25);
+
+      Pnl_Load.Set_Label_Color ((0.8, 0.8, 0.8, 1.0), (0.1, 0.1, 0.1, 1.0));
+
+      Pnl_Load.Set_Label ("LOAD");
+
       -- Drag panel
       ------------------------------------------------------
 
       Allocation.X := 0.89;
-      Allocation.Y := 0.14;
-      Allocation.H := 0.66;
+      Allocation.Y := 0.04;
+      Allocation.H := 0.76;
       Allocation.W := 0.09;
 
       Pnl_Drag.Set_Allocation (Allocation);
@@ -212,51 +230,29 @@ package body Display.Pages.Glider is
       -- Next button
       ------------------------------------------------------
 
-      Allocation.X := Pnl_Mass.Get_Allocation.X + Pnl_Mass.Get_Allocation.W - 0.125;
-      Allocation.Y := 2.0 * M;
-      Allocation.W := 0.12;
+      Allocation.X := 0.02;
+      Allocation.Y := 0.04;
+      Allocation.W := 0.09;
       Allocation.H := H;
 
       Btn_Next.Set_Allocation (Allocation);
 
-      Btn_Next.Set_Label (">");
+      Btn_Next.Set_Symbol (Glex.Symbols.Triangle_Right);
 
       Btn_Next.Set_Style (Button_Action);
 
       Btn_Next.Set_Font_Size (0.6, 0.4);
 
-      --
+      -- Mass selection
+      ------------------------------------------------------
 
-      Allocation.X := 0.16 + M;
-      Allocation.Y := 1.0 - (H + M);
-      Allocation.W := Btn_Next.Get_Allocation.X - M - Allocation.X;
-      Allocation.H := H;
-
-      Btn_Model.Set_Allocation (Allocation);
-
-      Btn_Model.Set_Label (Trim (This_Aircraft.Model));
-
-      Btn_Model.Set_Style (Button_Alive);
-
-      Btn_Model.Set_Font_Size (0.55, 0.35);
-
-      --
-
-      Btn_Mass.Set_Background_Color (Color_Black);
-
-      Btn_Mass.Set_Border_Color (Color_Gray_3);
-
-      Btn_Mass.Set_Label_Color (Line_Magenta);
-
-      --
-
-      Allocation.Y := Pnl_Mass.Get_Allocation.Y + Pnl_Mass.Get_Allocation.H - 0.02;
+      Allocation.Y := Pnl_Mass.Get_Allocation.Y + Pnl_Mass.Get_Allocation.H - 0.06;
 
       for I in Flight.Aircraft.Mass_Point_Range loop
 
-         Mass_Controls (I).Btn_Mass.Set_Style (Button_Alive);
+         Mass_Controls (I).Set_Style (Button_Alive);
 
-         Mass_Controls (I).Btn_Mass.Set_Font_Size (0.6, 0.3);
+         Mass_Controls (I).Set_Font_Size (0.6, 0.3);
 
          Allocation.X := (Font_1.Width + Font_1.Space) * Float (String_12'Length) + M;
 
@@ -266,33 +262,7 @@ package body Display.Pages.Glider is
 
          Allocation.H := H;
 
-         Mass_Controls (I).Btn_Mass.Set_Allocation (Allocation);
-
-         --
-
-         Mass_Controls (I).Btn_Plus.Set_Label ("+");
-
-         Mass_Controls (I).Btn_Plus.Set_Style (Button_Action);
-
-         Mass_Controls (I).Btn_Plus.Set_Font_Size (0.7, 0.5);
-
-         Allocation.X := Allocation.X + Allocation.W + 2.0 * (M + Font_1.Width + Font_1.Space) + M;
-
-         Allocation.W := 0.07;
-
-         Mass_Controls (I).Btn_Plus.Set_Allocation (Allocation);
-
-         --
-
-         Mass_Controls (I).Btn_Less.Set_Label ("-");
-
-         Mass_Controls (I).Btn_Less.Set_Style (Button_Action);
-
-         Mass_Controls (I).Btn_Less.Set_Font_Size (0.7, 0.5);
-
-         Allocation.X := Allocation.X + Allocation.W + M;
-
-         Mass_Controls (I).Btn_Less.Set_Allocation (Allocation);
+         Mass_Controls (I).Set_Allocation (Allocation);
 
       end loop;
 
@@ -317,10 +287,6 @@ package body Display.Pages.Glider is
 
    begin
 
-    --Btn_Model.Set_Label (Trim (This_Aircraft.Model) & "/" & Trim (This_Aircraft.Registration));
-
-    --Btn_Model.Draw;
-
       -- Mass panel
       --------------------------------------------------------------------------
       Pnl_Mass.Draw;
@@ -331,28 +297,28 @@ package body Display.Pages.Glider is
 
             if Mass_Focus = I then
 
-               Mass_Controls (I).Btn_Mass.Set_Style (Button_Focus);
+               Mass_Controls (I).Set_Style (Button_Focus);
 
             else
 
-               Mass_Controls (I).Btn_Mass.Set_Style (Button_Alive);
+               Mass_Controls (I).Set_Style (Button_Alive);
 
             end if;
 
-            Mass_Controls (I).Btn_Mass.Set_Label (Trim (Integer'Image (Integer (This_Aircraft.Mass_Points (I).Mass))));
+            Mass_Controls (I).Set_Label (Trim (Integer'Image (Integer (This_Aircraft.Mass_Points (I).Mass))));
 
-            Mass_Controls (I).Btn_Mass.Set_Label_Color (Line_Cyan);
+            Mass_Controls (I).Set_Label_Color (Line_Cyan);
 
             if
               (This_Aircraft.Mass_Points (I).Mass > This_Aircraft.Mass_Points (I).Mass_Max or else
                This_Aircraft.Mass_Points (I).Mass < This_Aircraft.Mass_Points (I).Mass_Min) and then Blink
             then
 
-               Mass_Controls (I).Btn_Mass.Set_Label_Color (Line_Red);
+               Mass_Controls (I).Set_Label_Color (Line_Red);
 
             end if;
 
-            Y := Mass_Controls (I).Btn_Mass.Get_Allocation.Y + 0.5 * (Mass_Controls (I).Btn_Mass.Get_Allocation.H - Font_1.Height);
+            Y := Mass_Controls (I).Get_Allocation.Y + 0.5 * (Mass_Controls (I).Get_Allocation.H - Font_1.Height);
 
             X := 2.0 * M;
 
@@ -362,7 +328,7 @@ package body Display.Pages.Glider is
                              Font_1,
                              Line_White);
 
-            X := Mass_Controls (I).Btn_Mass.Get_Allocation.X + Mass_Controls (I).Btn_Mass.Get_Allocation.W + M;
+            X := Mass_Controls (I).Get_Allocation.X + Mass_Controls (I).Get_Allocation.W + M;
 
             Glex.Fonts.Draw ("KG",
                              X,
@@ -370,17 +336,13 @@ package body Display.Pages.Glider is
                              Font_3,
                              Line_Grass);
 
-            Mass_Controls (I).Btn_Mass.Draw;
-
-            Mass_Controls (I).Btn_Plus.Draw;
-
-            Mass_Controls (I).Btn_Less.Draw;
+            Mass_Controls (I).Draw;
 
          end if;
 
       end loop;
 
-      Y := Pnl_Mass.Get_Allocation.Y + 2.0 * M;
+      Y := Y - 0.15;
 
       if This_Aircraft.Total_Mass > This_Aircraft.Maximum_Mass and Blink then
 
@@ -394,7 +356,7 @@ package body Display.Pages.Glider is
                        C);
 
       Glex.Fonts.Draw ("KG",
-                       Pnl_Mass.Get_Allocation.X + 0.55 * Pnl_Mass.Get_Allocation.W, Y,
+                       Pnl_Mass.Get_Allocation.X + 0.62 * Pnl_Mass.Get_Allocation.W, Y,
                        Font_3,
                        Line_Grass);
 
@@ -402,7 +364,7 @@ package body Display.Pages.Glider is
       --------------------------------------------------------------------------
       Pnl_Info.Draw;
 
-      X := Pnl_Info.Get_Allocation.X + 0.02;
+      X := Pnl_Info.Get_Allocation.X + 0.05;
       Y := Pnl_Info.Get_Allocation.Y + Pnl_Info.Get_Allocation.H - 2.5 * Font_V.Height;
 
       Glex.Fonts.Draw ("V",
@@ -525,11 +487,11 @@ package body Display.Pages.Glider is
 
       Frm_Red.Draw;
 
-      Glex.Fonts.Draw (">",
-                       Pnl_Drag.Get_Allocation.X + 0.025, Drag_Slider_Min + (This_Aircraft.Drag_Factor) / Drag_Slider_Range * Drag_Slider_Delta,
-                       Font_V,
-                       Line_White,
-                       Glex.Fonts.Alignment_CL);
+      Glex.Symbols.Draw (Glex.Symbols.Triangle_Right,
+                         Pnl_Drag.Get_Allocation.X + 0.015, Drag_Slider_Min + (This_Aircraft.Drag_Factor) / Drag_Slider_Range * Drag_Slider_Delta,
+                         0.03,
+                         Color_White,
+                         Glex.Fonts.Alignment_CL);
 
       -- CL/CD_max
       --------------------------------------
@@ -551,11 +513,31 @@ package body Display.Pages.Glider is
                        Line_White,
                        Glex.Fonts.Alignment_LC);
 
-      Glex.Fonts.Draw (Float_Image (100.0 * This_Aircraft.Drag_Factor, 0),
-                       X + 0.335, 0.06,
-                       Font_2,
-                       Line_Gray,
-                       Glex.Fonts.Alignment_LC);
+      -- Drag factor slider
+      --------------------------------------
+
+      if This_Aircraft.Mass_Points (Mass_Focus).Active then
+
+         Pnl_Load.Draw;
+
+         for I in 0..3 loop
+
+            Glex.Fonts.Draw (Integer_Image (I * 50),
+                             Pnl_Load.Get_Allocation.X + 0.08,
+                             Mass_Slider_Min + Float (I) * 50.0 / Mass_Slider_Range * Mass_Slider_Delta,
+                             Font_4,
+                             Line_White,
+                             Glex.Fonts.Alignment_CR);
+
+         end loop;
+
+         Glex.Symbols.Draw (Glex.Symbols.Triangle_Right,
+                            Pnl_Load.Get_Allocation.X + 0.015, Mass_Slider_Min + This_Aircraft.Mass_Points (Mass_Focus).Mass / Mass_Slider_Range * Mass_Slider_Delta,
+                            0.03,
+                            Color_White,
+                            Glex.Fonts.Alignment_CL);
+
+      end if;
 
       -- Change button
       --------------------------------------
@@ -593,33 +575,9 @@ package body Display.Pages.Glider is
 
             if This_Aircraft.Mass_Points (I).Active then
 
-               if Mass_Controls (I).Btn_Mass.Contains (X, Y) then
+               if Mass_Controls (I).Contains (X, Y) then
 
                   Mass_Focus := I;
-
-                  Display.Refresh := True;
-
-                  return;
-
-               elsif Mass_Controls (I).Btn_Plus.Contains (X, Y) then
-
-                  This_Aircraft.Mass_Points (I).Mass := Float'Min (150.0, This_Aircraft.Mass_Points (I).Mass + 1.0);
-
-                  Flight.Aircraft.Recalculate_Mass;
-
-                  Flight.Aircraft.Modified := True;
-
-                  Display.Refresh := True;
-
-                  return;
-
-               elsif Mass_Controls (I).Btn_Less.Contains (X, Y) then
-
-                  This_Aircraft.Mass_Points (I).Mass := Float'Max (0.0, This_Aircraft.Mass_Points (I).Mass - 1.0);
-
-                  Flight.Aircraft.Recalculate_Mass;
-
-                  Flight.Aircraft.Modified := True;
 
                   Display.Refresh := True;
 
@@ -640,9 +598,11 @@ package body Display.Pages.Glider is
 
 
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   Reference   : Float   := 0.0;
-   Sliding     : Boolean := False;
-   Slider_Step : Float   := 0.02;
+   Sliding_Drag  : Boolean := False;
+   Sliding_Mass  : Boolean := False;
+   Slider_Step   : constant Float := 0.01;
+   Slider_Drag_S : Float   := 0.0;
+   Slider_Mass_S : Float   := 0.0;
    --===========================================================================
    --
    --===========================================================================
@@ -654,14 +614,22 @@ package body Display.Pages.Glider is
 
       if First then
 
-         if Pnl_Drag.Contains (X, Y) then
-            Sliding := True;
-            Reference := S;
-         else
-            Sliding := False;
+         Sliding_Drag := False;
+         Sliding_Mass := False;
+
+         if    Pnl_Drag.Contains (X, Y) then
+
+            Sliding_Drag  := True;
+            Slider_Drag_S := S;
+
+         elsif Pnl_Load.Contains (X, Y) then
+
+            Sliding_Mass  := True;
+            Slider_Mass_S := S;
+
          end if;
 
-      elsif Sliding and then abs (S - Reference) >= Slider_Step then
+      elsif Sliding_Drag and then abs (S - Slider_Drag_S) >= Slider_Step then
 
          if    S < Drag_Slider_Min then --> snap to the minimum
             S := Drag_Slider_Min;
@@ -669,9 +637,30 @@ package body Display.Pages.Glider is
             S := Drag_Slider_Max;
          end if;
 
-         Reference := S;
+         Slider_Drag_S := S;
 
          This_Aircraft.Drag_Factor := (S - Drag_Slider_Min) / Drag_Slider_Delta * Drag_Slider_Range;
+
+         Flight.Aircraft.Modified := True;
+
+         Refresh := True;
+
+      elsif
+        This_Aircraft.Mass_Points (Mass_Focus).Active and then
+        Sliding_Mass and then abs (S - Slider_Mass_S) >= Slider_Step
+      then
+
+         if    S < Mass_Slider_Min then --> snap to the minimum
+            S := Drag_Slider_Min;
+         elsif S > Mass_Slider_Max then --> snap to the maximum
+            S := Drag_Slider_Max;
+         end if;
+
+         Slider_Mass_S := S;
+
+         This_Aircraft.Mass_Points (Mass_Focus).Mass := (S - Mass_Slider_Min) / Mass_Slider_Delta * Mass_Slider_Range;
+
+         Flight.Aircraft.Recalculate_Mass;
 
          Flight.Aircraft.Modified := True;
 
@@ -680,7 +669,7 @@ package body Display.Pages.Glider is
       end if;
 
    end Screen_Move;
-
+   -----------------------------------------------------------------------------
 
 end Display.Pages.Glider;
 --------------------------------------------------------------------------------

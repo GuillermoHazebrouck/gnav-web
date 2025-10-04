@@ -20,82 +20,36 @@
 
 -- Depencencies
 --//////////////////////////////////////////////////////////////////////////////
--- Gnav
-with Display.Panels.Baro;
-with Display.Panels.Radio;
-with Display.Panels.Metar;
 
 --//////////////////////////////////////////////////////////////////////////////
---
+-- This is a general page that toggles other pages on tabs
 --//////////////////////////////////////////////////////////////////////////////
-package body Display.Pages.Check is
-        
-   --===========================================================================
-   --
-   --===========================================================================
-   procedure Initialize is
-   begin
+package Display.Pages.Menu is
 
-      Display.Panels.Baro.Initialize  (0.01, 0.28);
-      
-      Display.Panels.Radio.Initialize (0.30, 0.01, 0.37, 0.850);
-      
-      Display.Panels.Metar.Initialize (0.68, 0.01, 0.31, 0.850);
-            
-   end Initialize;
-   -----------------------------------------------------------------------------
-   
-   
-   
+   --===========================================================================
+   --
+   --===========================================================================
+   procedure Initialize;
+     
+   --===========================================================================
+   --
+   --===========================================================================
+   procedure Draw;
    
    --===========================================================================
    --
    --===========================================================================
-   procedure Draw is
-   begin
-     
-      Display.Panels.Baro.Draw;
+   procedure Screen_Pressed (X, Y : Float);
       
-      Display.Panels.Radio.Draw;
-      
-      Display.Panels.Metar.Draw;
-      
-   end Draw;
-   -----------------------------------------------------------------------------
-   
-   
-   
-   
    --===========================================================================
    --
    --===========================================================================
-   procedure Screen_Pressed (X, Y : Float) is
-   begin
-    
-      Display.Panels.Baro.Screen_Pressed  (X, Y);
-      
-      Display.Panels.Radio.Screen_Pressed (X, Y);
-      
-      Display.Panels.Metar.Screen_Pressed (X, Y);
-      
-   end Screen_Pressed;
-   -----------------------------------------------------------------------------
-   
-   
+   procedure Screen_Move (X, Y, Dx, Dy : Float; First : Boolean);
    
    --===========================================================================
-   -- (See specifications file)
+   -- Handles a key press
    --===========================================================================
-   procedure Screen_Move (X, Y, Dx, Dy : Float; First : Boolean) is
-   begin
-      
-      Display.Panels.Radio.Screen_Move (X, Y, Dx, Dy, First);
-      
-      Display.Panels.Baro.Screen_Move (X, Y, Dx, Dy, First);
-      
-   end Screen_Move;
-   -----------------------------------------------------------------------------          
-     
-     
-end Display.Pages.Check;
+   procedure Key_Changed (Key : Front_Panel_Keys);
+   
+end Display.Pages.Menu;
 --------------------------------------------------------------------------------

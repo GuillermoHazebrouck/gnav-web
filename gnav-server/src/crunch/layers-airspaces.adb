@@ -41,160 +41,6 @@ use  Utility.Maps;
 --//////////////////////////////////////////////////////////////////////////////
 package body Layers.Airspaces is
 
-
-   --===========================================================================
-   -- Scans all the data, finds the local bounds and returns the global bounds
-   --===========================================================================
-   procedure Search_Global_Bounds (South_West, North_East : out Position_Record) is
-
-      use Math.Vector2;
-
-      Layer : Layer_Access;
-      Part  : Part_Access;
-      Point : Vector2_Access;
-
-      First_Global   : Boolean := True;
-      First_In_Layer : Boolean := True;
-      First_In_Part  : Boolean := True;
-
-   begin
-
-      Ada.Text_IO.Put_Line ("computing global bounds");
-
-      South_West := (0.0, 0.0);
-      North_East := (0.0, 0.0);
-
-      Layer := Airspaces.Get_First_Item;
-
-      while Layer /= null loop
-
-         First_In_Layer := True;
-
-         Part := Layer.Parts.Get_First_Item;
-
-         while Part /= null loop
-
-            -- Part bounds
-            --------------------------------------------------------------------
-
-            First_In_Part := True;
-
-            Point := Part.Points.Get_First_Item;
-
-            while Point /= null loop
-
-               if First_In_Part then
-
-                  Part.South_West.Lon := Point.Get_X;
-                  Part.South_West.Lat := Point.Get_Y;
-
-                  Part.North_East := Part.South_West;
-
-                  First_In_Part := False;
-
-               else
-
-                  if Point.Get_X < Part.South_West.Lon then
-                     Part.South_West.Lon := Point.Get_X;
-                  end if;
-
-                  if Point.Get_Y < Part.South_West.Lat then
-                     Part.South_West.Lat := Point.Get_Y;
-                  end if;
-
-                  if Point.Get_X > Part.North_East.Lon then
-                     Part.North_East.Lon := Point.Get_X;
-                  end if;
-
-                  if Point.Get_Y > Part.North_East.Lat then
-                     Part.North_East.Lat := Point.Get_Y;
-                  end if;
-
-               end if;
-
-               Part.Points.Get_Next_Item (Point);
-
-            end loop;
-
-            if Part.Points.Get_Count > 1 then
-
-               -- Layer bounds
-               -----------------------------------------------------------------
-               if First_In_Layer then
-
-                  Layer.South_West := Part.South_West;
-                  Layer.North_East := Part.North_East;
-
-                  First_In_Layer := False;
-
-               else
-
-                  if Part.South_West.Lon < Layer.South_West.Lon then
-                     Layer.South_West.Lon := Part.South_West.Lon;
-                  end if;
-
-                  if Part.South_West.Lat < Layer.South_West.Lat then
-                     Layer.South_West.Lat := Part.South_West.Lat;
-                  end if;
-
-                  if Part.North_East.Lon > Layer.North_East.Lon then
-                     Layer.North_East.Lon := Part.North_East.Lon;
-                  end if;
-
-                  if Part.North_East.Lat > Layer.North_East.Lat then
-                     Layer.North_East.Lat := Part.North_East.Lat;
-                  end if;
-
-               end if;
-
-               -- Global bounds
-               -----------------------------------------------------------------
-               if First_Global then
-
-                  South_West := Part.South_West;
-                  North_East := Part.North_East;
-
-                  First_Global := False;
-
-               else
-
-                  if Part.South_West.Lon < South_West.Lon then
-                     South_West.Lon := Part.South_West.Lon;
-                  end if;
-
-                  if Part.South_West.Lat < South_West.Lat then
-                     South_West.Lat := Part.South_West.Lat;
-                  end if;
-
-                  if Part.North_East.Lon > North_East.Lon then
-                     North_East.Lon := Part.North_East.Lon;
-                  end if;
-
-                  if Part.North_East.Lat > North_East.Lat then
-                     North_East.Lat := Part.North_East.Lat;
-                  end if;
-
-               end if;
-
-            end if;
-
-            Layer.Parts.Get_Next_Item (Part);
-
-         end loop;
-
-         Airspaces.Get_Next_Item (Layer);
-
-      end loop;
-
-      Ada.Text_IO.Put_Line ("NE: " & Image (North_East));
-      Ada.Text_IO.Put_Line ("SW: " & Image (South_West));
-
-   end Search_Global_Bounds;
-   -----------------------------------------------------------------------------
-
-
-
-
    --===========================================================================
    -- Specific function for airspace position data (Eg. 50:51:30N 003:11:10E)
    --===========================================================================
@@ -232,7 +78,7 @@ package body Layers.Airspaces is
 
                end if;
 
-            when 'E' | 'O' =>
+            when 'E' | 'W' =>
 
                if Image'Length > 9 then
 
@@ -277,8 +123,9 @@ package body Layers.Airspaces is
    --===========================================================================
    -- (See specification file)
    --===========================================================================
-   procedure Parse_Open_Air_File is
+   procedure Parse_Open_Air_File (File : Ada.Directories.Directory_Entry_Type) is
 
+      use Ada.Directories;
       use Ada.Text_IO;
       use Math.Vector2;
 
@@ -287,9 +134,9 @@ package body Layers.Airspaces is
 
       File_Id     : File_Type;
       Reader      : String_Buffer (200);
-      File_Name   : String := "airspaces.air";
+      File_Name   : String := Full_Name (File);
 
-      Layer       : Layer_Access     := null;
+      Sector      : Layer_Access     := null;
       Part        : Part_Access      := null;
       X, P1, P2   : Position_Record  := No_Position_Record;
       R, A1, A2   : Long_Float       := 0.0;
@@ -320,12 +167,12 @@ package body Layers.Airspaces is
       --========================================================================
       --
       --========================================================================
-      procedure Assign_Layer_Info is
+      procedure Assign_Sector_Info is
       begin
 
-         if Layer /= null then
+         if Sector /= null then
 
-            Override (Layer.Info, Kind & '/' & Class & '/' & Trim (Lower) & '/' & Trim (Upper) & '/' & Image (Label_Point));
+            Override (Sector.Info, Kind & '/' & Class & '/' & Trim (Lower) & '/' & Trim (Upper) & '/' & Image (Label_Point));
 
             -- The label point is loaded for only one sector
             --------------------------------------------------------------------
@@ -336,7 +183,7 @@ package body Layers.Airspaces is
 
          end if;
 
-      end Assign_Layer_Info;
+      end Assign_Sector_Info;
       --------------------------------------------------------------------------
 
 
@@ -379,7 +226,7 @@ package body Layers.Airspaces is
 
          end if;
 
-         Assign_Layer_Info;
+         Assign_Sector_Info;
 
       end Parse_Kind_And_Class;
       --------------------------------------------------------------------------
@@ -474,7 +321,7 @@ package body Layers.Airspaces is
 
       begin
 
-         if Layer = null or Part = null then
+         if Sector = null or Part = null then
 
             Ada.Text_Io.Put_Line ("error: layer or part not initialized at outline deflation");
 
@@ -514,7 +361,7 @@ package body Layers.Airspaces is
          if Part.Points.Get_Count = 1 then
             Part.Points.Clear;
          elsif N > 0 then
-            Ada.Text_Io.Put_Line ("info: at " & Trim (Layer.Name) & " part deflated by" & Natural'Image (N) & " points");
+            Ada.Text_Io.Put_Line ("info: at " & Trim (Sector.Name) & " part deflated by" & Natural'Image (N) & " points");
          end if;
 
       end Deflate_Outline;
@@ -527,7 +374,7 @@ package body Layers.Airspaces is
       procedure Split_Part is
       begin
 
-         if Layer = null or Part = null then
+         if Sector = null or Part = null then
 
             Ada.Text_Io.Put_Line ("error: layer or part not initialized at part splitting");
 
@@ -550,7 +397,7 @@ package body Layers.Airspaces is
 
             N := 1;
 
-            Layer.Parts.Add_Item (New_Part);
+            Sector.Parts.Add_Item (New_Part);
 
             Point := Part.Points.Get_First_Item;
 
@@ -564,7 +411,7 @@ package body Layers.Airspaces is
 
                if C = M then
 
-                  Layer.Parts.Add_Item (New_Part);
+                  Sector.Parts.Add_Item (New_Part);
 
                   N := N + 1;
                   C := 1;
@@ -576,11 +423,11 @@ package body Layers.Airspaces is
 
             end loop;
 
-            Layer.Parts.Remove_Item (Part);
+            Sector.Parts.Remove_Item (Part);
 
             Part := New_Part;
 
-            Ada.Text_Io.Put_Line ("warning: airspace " & Trim (Layer.Name) & " split in" & Natural'Image (N) & " parts");
+            Ada.Text_Io.Put_Line ("warning: airspace " & Trim (Sector.Name) & " split in" & Natural'Image (N) & " parts");
 
          end;
 
@@ -599,7 +446,7 @@ package body Layers.Airspaces is
 
       begin
 
-         if Layer = null or Part = null then
+         if Sector = null or Part = null then
 
             Ada.Text_Io.Put_Line ("error: layer or part not initialized at point insert");
 
@@ -618,7 +465,7 @@ package body Layers.Airspaces is
 
             if Inn_Point /= No_Position_Record then
 
-               -- Add intersection and create a new airspace
+               -- Add intersection and create a new part
                -----------------------------------------------------------------
                Q := Intersection (Inn_Point, P, SW, NW);
                if Q = No_Position_Record then
@@ -647,7 +494,7 @@ package body Layers.Airspaces is
 
                      --Ada.Text_Io.Put_Line ("warning: no points in " & Trim (Name));
 
-                     Layer.Parts.Remove_Item (Part);
+                     Sector.Parts.Remove_Item (Part);
 
                      Part := null;
 
@@ -662,7 +509,7 @@ package body Layers.Airspaces is
                   -- Add new one to continue
                   --------------------------------------------------------------
 
-                  Layer.Parts.Add_Item (Part);
+                  Sector.Parts.Add_Item (Part);
 
                else
                   -- NOTE: this is an error because Out_Point is outside and
@@ -1028,14 +875,14 @@ package body Layers.Airspaces is
 
 
       --========================================================================
-      -- Finishes the active airspace
+      -- Finishes the active sector
       --========================================================================
-      procedure Finish_Airspace is
+      procedure Finish_Sector is
       begin
 
          -- Finish previous one
          -----------------------------------------------------------
-         if Layer /= null and Part /= null then
+         if Sector /= null and Part /= null then
 
             -- Close if necessary
             --------------------------------------------------------
@@ -1047,7 +894,7 @@ package body Layers.Airspaces is
 
             end if;
 
-            if Layer.Name = No_Part_Name then
+            if Sector.Name = No_Part_Name then
                Ada.Text_IO.Put_Line ("warning: unamed airspace");
             end if;
 
@@ -1067,47 +914,75 @@ package body Layers.Airspaces is
             -- Warn if incomplete data
             --------------------------------------------------------
             if Upper = No_Vertical_Limit_String then
-               Ada.Text_IO.Put_Line ("warning: no upper limit in " & Trim (Layer.Name));
+               Ada.Text_IO.Put_Line ("warning: no upper limit in " & Trim (Sector.Name));
             end if;
 
             if Lower = No_Vertical_Limit_String then
-               Ada.Text_IO.Put_Line ("warning: no lower limit in " & Trim (Layer.Name));
+               Ada.Text_IO.Put_Line ("warning: no lower limit in " & Trim (Sector.Name));
             end if;
 
-            Assign_Layer_Info; --?
+            Assign_Sector_Info; --?
 
             Deflate_Outline;
 
             if Part.Points.Get_Count = 0 then
 
-               Ada.Text_Io.Put_Line ("warning: no points in " & Trim (Layer.Name));
-               Layer.Parts.Remove_Item (Part);
+               Ada.Text_Io.Put_Line ("warning: no points in " & Trim (Sector.Name));
+               Sector.Parts.Remove_Item (Part);
 
             elsif Part.Points.Get_Count > Max_Points then
 
-               Ada.Text_Io.Put_Line ("warning: too many points in part of layer " & Trim (Layer.Name) & ":" & Natural'Image (Part.Points.Get_Count));
+               Ada.Text_Io.Put_Line ("warning: too many points in part of layer " & Trim (Sector.Name) & ":" & Natural'Image (Part.Points.Get_Count));
                Split_Part;
 
             end if;
 
-            Part  := null;
+            -- Remove if empty
+            --------------------------------------------------------
+            declare
+               Empty : Boolean := True;
+            begin
 
-            Layer := null;
+               Part := Sector.Parts.Get_First_Item;
+
+               while Part /= null loop
+
+                  if Part.Points.Get_Count > 1 then
+
+                     Empty := False;
+
+                     exit;
+
+                  end if;
+
+                  Sector.Parts.Get_Next_Item (Part);
+
+               end loop;
+
+               if Empty then
+
+                  Airspaces.Remove_Item (Sector);
+
+               end if;
+
+            end;
+
+            Part   := null;
+
+            Sector := null;
 
          end if;
 
-      end Finish_Airspace;
+      end Finish_Sector;
       --------------------------------------------------------------------------
 
    begin
 
       if Ada.Directories.Exists (File_Name) then
 
-         Ada.Text_Io.Put_Line ("reading OpenAir file");
+         Ada.Text_Io.Put_Line ("reading OpenAir file " & File_Name);
 
          Setup_Configuration;
-
-         Airspaces.Clear;
 
          -- Start reading
          -----------------------------------------------------------------------
@@ -1125,10 +1000,10 @@ package body Layers.Airspaces is
 
                   if Key = "AC" then
 
-                     -- Finish last airspace
+                     -- Finish last sector
                      -----------------------------------------------------------
 
-                     Finish_Airspace;
+                     Finish_Sector;
 
                      -- Reset variables
                      -----------------------------------------------------------
@@ -1145,16 +1020,17 @@ package body Layers.Airspaces is
                      -----------------------------------------------------------
 
                      if Airspaces.Get_Count >= 500 then
+                        Ada.Text_IO.Put_Line ("warning: reached the limit of sectors");
                         return;
                      end if;
 
-                     Airspaces.Add_Item (Layer);
+                     Airspaces.Add_Item (Sector);
 
-                     Layer.Parts.Add_Item (Part);
+                     Sector.Parts.Add_Item (Part);
 
                      Parse_Kind_And_Class (Reader.Read_Next (Multiple => True));
 
-                  elsif Layer /= null and Part /= null then
+                  elsif Sector /= null and Part /= null then
 
                      if
                        Key = "AN"
@@ -1162,7 +1038,7 @@ package body Layers.Airspaces is
 
                         Override (Name, Reader.Read_Next (Separator => '*'));
 
-                        Layer.Name := Name;
+                        Sector.Name := Name;
 
                      elsif Key = "AY" then
 
@@ -1296,13 +1172,18 @@ package body Layers.Airspaces is
 
                end if;
 
-            exception when E : others =>
+            exception
+               when E : others =>
+                  Close (File_Id);
                   Ada.Text_IO.Put_Line ("error: " & Ada.Exceptions.Exception_Message (E));
                   Reader.Dump_Content;
+                  return;
 
             end;
 
          end loop;
+
+         Close (File_Id);
 
       else
          Ada.Text_IO.Put_Line ("error: file '" & File_Name & "' not found");
@@ -1311,7 +1192,7 @@ package body Layers.Airspaces is
 
       -- Finish last airspace if required
       --------------------------------------------------------------------------
-      Finish_Airspace;
+      Finish_Sector;
 
       -- Organize the stack according to the kind so that the representation is
       -- correctly stacked.
@@ -1319,25 +1200,25 @@ package body Layers.Airspaces is
 
       declare
          Order : constant String (1..5) := "GCRTE";
-         Layer_To_Move : Layer_Access;
+         Sector_To_Move : Layer_Access := null;
       begin
 
          for K of reverse Order loop
 
-            Layer := Airspaces.Get_First_Item;
+            Sector := Airspaces.Get_First_Item;
 
-            while Layer /= null loop
+            while Sector /= null loop
 
-               if Layer.Info (1) = K then
+               if Sector.Info (1) = K then
 
-                  Layer_To_Move := Layer;
+                  Sector_To_Move := Sector;
 
-                  Airspaces.Get_Next_Item (Layer);
+                  Airspaces.Get_Next_Item (Sector);
 
-                  Airspaces.Move_To_First (Layer_To_Move);
+                  Airspaces.Move_To_First (Sector_To_Move);
 
                else
-                  Airspaces.Get_Next_Item (Layer);
+                  Airspaces.Get_Next_Item (Sector);
 
                end if;
 
@@ -1349,29 +1230,50 @@ package body Layers.Airspaces is
 
       if List_Sectors then
 
-         Layer := Airspaces.Get_First_Item;
+         Sector := Airspaces.Get_First_Item;
 
-         while Layer /= null loop
+         while Sector /= null loop
 
-            Ada.Text_IO.Put_Line ("{" & Layer.Name & "}{" & Layer.Info & "}" & Natural'Image (Layer.Parts.Get_Count));
+            Ada.Text_IO.Put_Line ("{" & Sector.Name & "}{" & Sector.Info & "}" & Natural'Image (Sector.Parts.Get_Count));
 
-            Part := Layer.Parts.Get_First_Item;
+            Part := Sector.Parts.Get_First_Item;
 
             while Part /= null loop
 
                Ada.Text_IO.Put_Line ("   " & Natural'Image (Part.Points.Get_Count));
 
-               Layer.Parts.Get_Next_Item (Part);
+               Sector.Parts.Get_Next_Item (Part);
 
             end loop;
 
-            Airspaces.Get_Next_Item (Layer);
+            Airspaces.Get_Next_Item (Sector);
 
          end loop;
 
       end if;
 
    end Parse_Open_Air_File;
+   -----------------------------------------------------------------------------
+
+
+
+
+   --===========================================================================
+   -- (See specification file)
+   --===========================================================================
+   procedure Load_Open_Air_Files is
+
+      use Ada.Directories;
+
+   begin
+
+      Airspaces.Clear;
+
+      Search (Directory => "./",
+              Pattern   => "*.air",
+              Process   => Parse_Open_Air_File'Access);
+
+   end Load_Open_Air_Files;
    -----------------------------------------------------------------------------
 
 
@@ -1399,15 +1301,17 @@ package body Layers.Airspaces is
 
       if Airspaces.Get_Count > 0 then
 
-         Search_Global_Bounds (South_West, North_East);
+         Ada.Text_Io.Put_Line ("computing bounds");
+         Compute_Bounds (Airspaces);
+         Compute_Global_Bounds (Airspaces, South_West, North_East);
+         Ada.Text_Io.Put_Line ("NE: " & Maps.Image (North_East));
+         Ada.Text_Io.Put_Line ("SW: " & Maps.Image (South_West));
 
          Origin.Lat := 0.5 * (South_West.Lat + North_East.Lat);
          Origin.Lon := 0.5 * (South_West.Lon + North_East.Lon);
 
          Ada.Text_Io.Put_Line ("compiling airspaces");
          Ada.Text_Io.Put_Line ("origin: " & Maps.Image (Origin));
-         Ada.Text_Io.Put_Line ("NE: " & Maps.Image (North_East));
-         Ada.Text_Io.Put_Line ("SW: " & Maps.Image (South_West));
 
          -- Start writing
          -----------------------------------------------------------------------
@@ -1479,6 +1383,11 @@ package body Layers.Airspaces is
          Ada.Text_Io.Put_Line (Natural'Image (N) & " nodes in total");
 
       end if;
+
+   exception
+      when E : others =>
+         Close (File_Id);
+         Ada.Text_IO.Put_Line ("error while compiling the airspaces: " & Ada.Exceptions.Exception_Message (E));
 
    end Compile_Data;
    -----------------------------------------------------------------------------

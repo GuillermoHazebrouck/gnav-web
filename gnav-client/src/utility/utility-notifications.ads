@@ -32,7 +32,9 @@ package Utility.Notifications is
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    type Notification_Kinds is (Notify_Sector,
                                Notify_Sink,
-                               Notify_Range);
+                               Notify_Range,
+                               Notify_Waypoint,
+                               Notify_100m);
 
    --===========================================================================
    -- Puts a notification in the queue (FIFO buffer)
@@ -42,7 +44,7 @@ package Utility.Notifications is
    --===========================================================================
    -- Deque the next alert
    --===========================================================================
-   function Dequeue_Next return Interfaces.Unsigned_8;
+   function Dequeue_Next return Interfaces.Integer_64;
 
 end Utility.Notifications;
 --------------------------------------------------------------------------------

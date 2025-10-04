@@ -27,6 +27,7 @@ with Glex;
 with Glex.Colors;
 with Glex.Colormap;
 with Utility.Log;
+with Utility.Storage;
 with Utility.Strings;
 with Utility.Streams;
 
@@ -36,6 +37,46 @@ with Utility.Streams;
 package body Maps.Terrain is
 
    pragma Warnings (Off);
+
+   --===========================================================================
+   -- (See specification file)
+   --===========================================================================
+   function Get_High_Resolution return Boolean is
+   begin
+
+      return High_Resolution;
+
+   end Get_High_Resolution;
+   -----------------------------------------------------------------------------
+
+
+
+
+   --===========================================================================
+   -- (See specification file)
+   --===========================================================================
+   procedure Set_High_Resolution (Value : Boolean) is
+   begin
+
+      if High_Resolution /= Value then
+
+         High_Resolution := Value;
+
+         Reload := True;
+
+         if High_Resolution then
+            Utility.Storage.Set_Item ("RESOLUTION", "HIGH");
+         else
+            Utility.Storage.Set_Item ("RESOLUTION", "LOW");
+         end if;
+
+      end if;
+
+   end Set_High_Resolution;
+   -----------------------------------------------------------------------------
+
+
+
 
    --===========================================================================
    -- Clears the grid
@@ -129,7 +170,9 @@ package body Maps.Terrain is
 
          if not View.Show_Terrain then
 
-            Colormap.Load (Buffer);
+            for Colormap of Colormaps loop
+               Colormap.Load (Buffer);
+            end loop;
 
             return;
 
@@ -140,9 +183,9 @@ package body Maps.Terrain is
             -- The intended resolution (cells/side)
             -----------------------------------------------
             View_Aspect  : constant Float := View.W / View.H * Glex.Aspect;
-            Resolution   : constant Float := 42.0; --> maximum number of tiles on the sides
-            Resolution_X : Float;                  --> intended size of the tiles on X
-            Resolution_Y : Float;                  --> intended size of the tiles on Y
+            Resolution   : Float; --> maximum number of tiles on the sides
+            Resolution_X : Float; --> intended size of the tiles on X
+            Resolution_Y : Float; --> intended size of the tiles on Y
 
             -- The required number of cells to cover a tile
             -----------------------------------------------
@@ -151,8 +194,8 @@ package body Maps.Terrain is
 
             -- Number of vertical and horizontal tiles
             -----------------------------------------------
-            Tiles_Count_X : Natural := 0;
-            Tiles_Count_Y : Natural := 0;
+            Tile_Count_X : Natural := 0;
+            Tile_Count_Y : Natural := 0;
 
             -- The size of a tile in isometric coordinates
             -----------------------------------------------
@@ -176,6 +219,9 @@ package body Maps.Terrain is
             Grid_T  : Integer;
             Grid_R  : Integer;
 
+            N : Natural := Colormaps'Length;
+            T : Natural := 0;
+
          begin
 
             On_Clip := False;
@@ -191,9 +237,9 @@ package body Maps.Terrain is
               South_West.Lat >= Screen_NE.Lat
             then
 
-               --Utility.Log.Put_Message ("chart out of bounds");
-
-               Colormap.Load (Buffer);
+               for Colormap of Colormaps loop
+                  Colormap.Load (Buffer);
+               end loop;
 
                return;
 
@@ -203,6 +249,12 @@ package body Maps.Terrain is
 
             -- Compute the size of a tile in isometric map coordinates
             --------------------------------------------------------------------
+            if High_Resolution then
+               Resolution := 60.0;
+            else
+               Resolution := 42.0;
+            end if;
+
             Resolution_X := View.Zoom / Resolution; --latdeg/width
             Resolution_Y := Resolution_X;
 
@@ -234,32 +286,28 @@ package body Maps.Terrain is
 
             -- Calculate number of tiles
             --------------------------------------------------------------------
-            Tiles_Count_X := (Grid_R - Grid_L) / Tile_Step_X;
-            Tiles_Count_Y := (Grid_T - Grid_B) / Tile_Step_Y;
+            Tile_Count_X := (Grid_R - Grid_L) / Tile_Step_X;
+            Tile_Count_Y := (Grid_T - Grid_B) / Tile_Step_Y;
 
-          --Utility.Log.Put_Message ("view_aspe=" & Float'Image   (View_Aspect));
-          --Utility.Log.Put_Message ("n_tiles_x=" & Natural'Image (Tiles_Count_X));
-          --Utility.Log.Put_Message ("n_tiles_y=" & Natural'Image (Tiles_Count_Y));
-          --Utility.Log.Put_Message ("s_tiles_x=" & Natural'Image (Tile_Step_X));
-          --Utility.Log.Put_Message ("s_tiles_y=" & Natural'Image (Tile_Step_Y));
-          --Utility.Log.Put_Message ("d_tiles_x=" & Float'Image   (Tile_Size_X));
-          --Utility.Log.Put_Message ("d_tiles_y=" & Float'Image   (Tile_Size_Y));
-          --Utility.Log.Put_Message ("r_tiles_x=" & Float'Image   (Resolution_X));
-          --Utility.Log.Put_Message ("r_tiles_y=" & Float'Image   (Resolution_Y));
+            T := (Tile_Count_X + 1) * (Tile_Count_Y + 1);
 
             -- Check that there is something to draw
             -----------------------------------------------------------------------
-            if Tiles_Count_X = 0 or Tiles_Count_Y = 0 then
-
-               --Utility.Log.Put_Message ("no terrain tiles to draw");
+            if Tile_Count_X = 0 or Tile_Count_Y = 0 then
 
                return;
 
-            elsif (Tiles_Count_X + 1) * (Tiles_Count_Y + 1) > Buffer_Limit then
+            -- Check if the map can be hold in one colormap
+            -----------------------------------------------------------------------
+            elsif T < Buffer_Limit then
+
+               N := 1;
+
+            -- Check that the tiles can be fully loaded
+            -----------------------------------------------------------------------
+            elsif T / N > Buffer_Limit - Tile_Count_X - 1 then
 
                -- (normally this should not occur due to resolution contrains)
-
-               --Utility.Log.Put_Message ("too many terrain tiles");
 
                return;
 
@@ -276,6 +324,10 @@ package body Maps.Terrain is
                P  : Position_Record;
                P0 : Position_Record;
                PD : Position_Record;
+
+               Tile_Init_Y : Natural;
+               Tile_Last_Y : Natural;
+               Tile_Span_Y : Natural;
 
             begin
 
@@ -297,71 +349,97 @@ package body Maps.Terrain is
 
                I := (Grid_B - 1) * N_Lon;
 
-               for K in 0..Tiles_Count_Y loop
+               for C in 1..N loop
 
-                  P.Lon := P0.Lon;
+                  Buffer.Reset;
 
-                  X := Float (P.Lon - Center.Lon) * Shrink;
+                  Tile_Init_Y := (C-1) * Tile_Count_Y / N;
+                  Tile_Last_Y :=  C    * Tile_Count_Y / N;
+                  Tile_Span_Y := Tile_Last_Y - Tile_Init_Y;
 
-                  J := Grid_L;
+                  for K in Tile_Init_Y .. Tile_Last_Y loop
 
-                  for S in 0..Tiles_Count_X loop
+                     P.Lon := P0.Lon;
 
-                     Z := Float (Altitude (I + J));
+                     X := Float (P.Lon - Center.Lon) * Shrink;
 
-                     View.Find_Color (P, Z, 1.0, Z_Min_Global, Z_Max_Global, R, G ,B);
+                     J := Grid_L;
 
-                     Buffer.Load_Node (X, Y, R, G, B);
+                     for S in 0..Tile_Count_X loop
 
-                     P.Lon := P.Lon + PD.Lon;
+                        Z := Float (Altitude (I + J));
 
-                     X := X + Tile_Size_X;
+                        View.Find_Color (P, Z, 1.0, Z_Min_Global, Z_Max_Global, R, G ,B);
 
-                     J := J + Tile_Step_X;
+                        Buffer.Load_Node (X, Y, R, G, B);
+
+                        P.Lon := P.Lon + PD.Lon;
+
+                        X := X + Tile_Size_X;
+
+                        J := J + Tile_Step_X;
+
+                     end loop;
+
+                     P.Lat := P.Lat + PD.Lat;
+
+                     if K < Tile_Last_Y then
+
+                        Y := Y + Tile_Size_Y;
+
+                        I := I + N_Lon * Tile_Step_Y;
+
+                     end if;
 
                   end loop;
 
-                  P.Lat := P.Lat + PD.Lat;
+                  -- Elements
+                  --------------------
 
-                  Y := Y + Tile_Size_Y;
+                  I1 := 0;
+                  I2 := 1;
+                  J1 := Tile_Count_X + 1;
+                  J2 := Tile_Count_X + 2;
 
-                  I := I + N_Lon * Tile_Step_Y;
+                  for S in 1..Tile_Span_Y loop
 
-               end loop;
+                     for K in 1..Tile_Count_X loop
 
-               -- Elements
-               --------------------
+                        Buffer.Load_Element (I1, I2, J2);
 
-               I1 := 0;
-               I2 := 1;
-               J1 := Tiles_Count_X + 1;
-               J2 := Tiles_Count_X + 2;
+                        Buffer.Load_Element (J2, J1, I1);
 
-               for S in 1..Tiles_Count_Y loop
+                        I1 := I1 + 1;
+                        I2 := I2 + 1;
+                        J1 := J1 + 1;
+                        J2 := J2 + 1;
 
-                  for K in 1..Tiles_Count_X loop
-
-                     Buffer.Load_Element (I1, I2, J2);
-
-                     Buffer.Load_Element (J2, J1, I1);
+                     end loop;
 
                      I1 := I1 + 1;
                      I2 := I2 + 1;
                      J1 := J1 + 1;
-                     J2 := J2 + 1;
+                     J2 := J1 + 1;
 
                   end loop;
 
-                  I1 := I1 + 1;
-                  I2 := I2 + 1;
-                  J1 := J1 + 1;
-                  J2 := J1 + 1;
+                  Colormaps (C).Load (Buffer);
 
                end loop;
 
-               --Utility.Log.Put_Message ("grid done");
+               -- Reset unusued colormaps
+               ----------------------------------------------
+               if N < Colormaps'Length then
 
-               Colormap.Load (Buffer);
+                  Buffer.Reset;
+
+                  for C in N + 1 .. Colormaps'Last loop
+
+                     Colormaps (C).Load (Buffer);
+
+                  end loop;
+
+               end if;
 
             end;
 
@@ -378,7 +456,9 @@ package body Maps.Terrain is
 
       Glex.Get_Transform.Copy (View.Get_Geographic_Matrix);
 
-      Colormap.Draw;
+      for Colormap of Colormaps loop
+         Colormap.Draw;
+      end loop;
 
       Glex.Get_Transform.Load_Unit;
 

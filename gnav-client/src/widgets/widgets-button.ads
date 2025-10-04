@@ -23,6 +23,8 @@
 -- Gnav
 with Glex.Colors;
 use  Glex.Colors;
+with Glex.Symbols;
+use  Glex.Symbols;
 with Widgets.Widget;
 use  Widgets.Widget;
 
@@ -72,6 +74,11 @@ package Widgets.Button is
    -- Sets the text to be represented
    --===========================================================================
    procedure Set_Label (This : in out Button_Record; Text : String);
+
+   --===========================================================================
+   -- Sets the symbol to be represented
+   --===========================================================================
+   procedure Set_Symbol (This : in out Button_Record; Symbol : Symbol_Kinds);
 
    --===========================================================================
    -- Sets the text color of the text
@@ -126,7 +133,7 @@ private
 
    Color_Line_Button_Action   : constant Color_Record      := Color_Gray_4;
    Color_Back_Button_Action   : constant Color_Record      := Color_Ocean;
-   Color_Font_Button_Action   : constant Line_Color_Record := Line_White;
+   Color_Font_Button_Action   : constant Line_Color_Record := Line_Water;
 
    Color_Line_Button_Ok       : constant Color_Record      := Color_Gray_4;
    Color_Back_Button_Ok       : constant Color_Record      := Color_Green;
@@ -157,6 +164,8 @@ private
       Width_Ratio : Ratio_Float;
 
       Space_Ratio : Ratio_Float;
+
+      Symbol      : Symbol_Kinds;
 
    end record;
 

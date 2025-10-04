@@ -228,17 +228,17 @@ package Flight is
    --===========================================================================
    -- Event triggered when the data is cached
    --===========================================================================
-   On_Data_Cached : Utility.Events.Event_Stack;
+   On_Data_Cached : Utility.Events.Event_Stack (4);
    
    --===========================================================================
    -- Event triggered when the data is cleared
    --===========================================================================
-   On_Data_Cleared : Utility.Events.Event_Stack;
+   On_Data_Cleared : Utility.Events.Event_Stack (4);
    
    --===========================================================================
    -- Occurs when the replay is reset
    --===========================================================================
-   On_Data_Reset : Utility.Events.Event_Stack;
+   On_Data_Reset : Utility.Events.Event_Stack (4);
  
    --///////////////////////////////////////////////////////////////////////////
    -- Other functions
@@ -278,7 +278,13 @@ package Flight is
    -- Forces date and time synchronization
    --===========================================================================
    procedure Resync_Data_And_Time;
-  
+   
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   -- The safety height used to emit range warnings
+   -- NOTE: when changed, the data will be adjusted the next regular update
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   Safety_Height : Float := 250.0;
+   
 private
 
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -351,10 +357,5 @@ private
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    Vario_Max_Lapse : constant Float := 4.0;
  
-   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   -- The safety height used to emit range warnings
-   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   Safety_Height : constant Float := 200.0;
-   
 end Flight;
 --------------------------------------------------------------------------------

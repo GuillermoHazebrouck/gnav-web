@@ -585,6 +585,7 @@ package body Maps.Airspaces is
             Counter : Natural := 0;
             F       : Natural;
             First   : Boolean := True;
+            Corner  : aliased Node_Record;
          begin
 
             for P in This.First..This.Last loop
@@ -596,8 +597,6 @@ package body Maps.Airspaces is
                then
 
                   -- Include part in the horizontal ray scan
-                  -- TODO: handle parts that discontinuate at the corners of the
-                  -- map coverage area.
                   --------------------------------------------------------------
 
                   if First then
@@ -606,6 +605,33 @@ package body Maps.Airspaces is
                      First := False;
                   else
                      F := Parts (P).First;
+
+                     -- Detect corners
+                     -----------------------------------------------------------
+                     -- B := Nodes_Buffer (F)'Access;
+                     --
+                     -- if A.X /= B.X or A.Y /= B.Y then
+                     --
+                     --    if
+                     --      A.X = Float (Clip_South_West.Lon - This.Center.Lon) or else
+                     --      A.X = Float (Clip_North_East.Lon - This.Center.Lon)
+                     --    then
+                     --       Corner.X := A.X;
+                     --       Corner.Y := B.Y;
+                     --    elsif
+                     --      A.Y = Float (Clip_South_West.Lat - This.Center.Lat) or else
+                     --      A.Y = Float (Clip_North_East.Lat - This.Center.Lat)
+                     --    then
+                     --       Corner.Y := A.Y;
+                     --       Corner.X := B.X;
+                     --    end if;
+                     --
+                     --    Count_Right_Crossing (X, Y, A, Corner'Access, Add, Counter);
+                     --
+                     --    A := Corner'Access;
+                     --
+                     -- end if;
+
                   end if;
 
                   for N in F .. Parts (P).Last loop

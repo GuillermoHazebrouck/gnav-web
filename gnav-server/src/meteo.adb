@@ -23,6 +23,9 @@
 -- Standard
 with Ada.Calendar.Formatting;
 with Ada.Calendar.Time_Zones;
+use  Ada.Calendar.Time_Zones;
+with Ada.Calendar.Conversions;
+use  Ada.Calendar.Conversions;
 with Ada.Directories;
 with Ada.Text_IO;
 -- Aws
@@ -56,19 +59,6 @@ package body Meteo is
 
 
 
-
-   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   --
-   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   Utc_Offset : Duration := 60.0 * Duration (Ada.Calendar.Time_Zones.UTC_Time_Offset);
-
-   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   --
-   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   Epoch : constant Time := Time_Of (Year    => 1970,
-                                     Month   => 1,
-                                     Day     => 1,
-                                     Seconds => 0.0);
 
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    --
@@ -107,16 +97,20 @@ package body Meteo is
                   Arg_1 : String := Argument.Read_Next ('|');
                   Arg_2 : String := Argument.Read_Next ('|');
                   Arg_3 : String := Argument.Read_Next ('|');
-                  Arg_4 : String := Argument.Read_Next (' ');
+                  Arg_4 : String := Argument.Read_Next ('|');
+                  Arg_5 : String := Argument.Read_Next (' ');
                begin
 
                   if Key = "METEO_STATION" then
 
-                     Stations (S).Loaded    := True;
-                     Stations (S).Position  := Utility.Maps.Value  (Arg_1);
-                     Stations (S).Elevation := Natural'Value       (Arg_2);
-                     Stations (S).Interval  := Duration'Value      (Arg_3) * 60.0;
-                     Stations (S).Url       := To_Unbounded_String (Arg_4);
+                     Stations (S).Loaded := True;
+
+                     Utility.Override (Stations (S).Name, Arg_1);
+
+                     Stations (S).Position  := Utility.Maps.Value  (Arg_2);
+                     Stations (S).Elevation := Natural'Value       (Arg_3);
+                     Stations (S).Interval  := Duration'Value      (Arg_4) * 60.0;
+                     Stations (S).Url       := To_Unbounded_String (Arg_5);
 
                      if S = Station_Range'Last then
                         return;
@@ -134,10 +128,9 @@ package body Meteo is
 
          end if;
 
-         Log_Trace ("UTC offset is set to " & Duration'Image (Utc_Offset / 3600.0));
-
       end Setup_Stations;
       --------------------------------------------------------------------------
+
 
 
 
@@ -150,8 +143,6 @@ package body Meteo is
          Updated : Boolean := False;
 
       begin
-
-         Utc_Offset := 60.0 * Duration (Ada.Calendar.Time_Zones.UTC_Time_Offset);
 
          for Station of Stations loop
 
@@ -196,7 +187,7 @@ package body Meteo is
 
                -- Write the active stations
                -----------------------------------------------------------------
-               Time_Stamp := Long_Float ((Now - Epoch) - Utc_Offset);
+               Time_Stamp := Long_Float (To_Unix_Time (Now));
 
                Utility.Log.Log_Trace ("timestamp =" & Long_Float'Image (Time_Stamp));
 
@@ -227,7 +218,7 @@ package body Meteo is
 
                      Metar_Name'Write (Source, Station.Name);                                       -- 4 bytes
 
-                     Metar_Time := Long_Float ((Station.Date - Epoch) - Utc_Offset);
+                     Metar_Time := Long_Float (To_Unix_Time (Station.Date));
 
                      Metar_Offset := Float (Metar_Time - Time_Stamp);
 
@@ -303,7 +294,8 @@ package body Meteo is
       use Utility;
 
       Reader : String_Buffer (Message'Length);
-      Fog    : Boolean := False;
+      Fog    : Boolean    := False;
+      Name   : Metar_Name := (others => ' ');
 
    begin
 
@@ -311,10 +303,27 @@ package body Meteo is
 
       Reader.Load (Message);
 
+      declare
+         Message_Type : String := Reader.Read_Next (' ', Multiple => True);
+      begin
+         if Message_Type /= "METAR" then
+            Utility.Log.Log_Trace ("warning: wrong metar message received (" & Message_Type & ")");
+            return;
+         end if;
+      end;
+
+      Override (Name, Reader.Read_Next (' ', Multiple => True));
+
+      if This.Name /= Name then
+         Utility.Log.Log_Trace ("warning: wrong station received (" & Name & ")");
+         Utility.Log.Log_Trace (Message);
+         return;
+      end if;
+
       This.Active        := False;
       This.Wind_Speed    := 0;
       This.Wind_Course   := 0;
-      This.Name          := Message (Message'First..Message'First+3);
+
       This.Cloud_Base    := 0; -- (0 => no clouds, 1 => Fog, > 1 => Base)
       This.Precipitation := 0;
       This.Visibility    := 9999; -- (9999 => unlimited)
@@ -350,7 +359,7 @@ package body Meteo is
                         This.Date := Ada.Calendar.Time_Of (Year  (Now),
                                                            Month (Now),
                                                            Day,
-                                                           Day_Duration (Lapse)) + Utc_Offset;
+                                                           Day_Duration (Lapse)) + Duration (60 * UTC_Time_Offset);
                      else
                         Log_Trace ("meteo station " & This.Name & ": incorrect metar time " & Data);
 
@@ -525,8 +534,8 @@ package body Meteo is
          Log_Trace ("METEO STATION " & This.Name);
          Log_Trace ("Location    = " & Image (This.Position));
          Log_Trace ("Elevation   = " & Natural'Image (This.Elevation));
-         Log_Trace ("Time        = " & Ada.Calendar.Formatting.Image (This.Date));
-         Log_Trace ("Next        = " & Ada.Calendar.Formatting.Image (This.Next_Update));
+         Log_Trace ("Time        = " & Ada.Calendar.Formatting.Image (This.Date,        Time_Zone => UTC_Time_Offset));
+         Log_Trace ("Next        = " & Ada.Calendar.Formatting.Image (This.Next_Update, Time_Zone => UTC_Time_Offset));
          Log_Trace ("QNH         = " & Natural'Image (This.Qnh));
          Log_Trace ("Wind speed  = " & Natural'Image (This.Wind_Speed));
          Log_Trace ("Wind course = " & Natural'Image (This.Wind_Course));

@@ -297,5 +297,26 @@ package body Flight.Register is
 
 
 
+
+   --===========================================================================
+   -- (See specification file)
+   --===========================================================================
+   function Get_Meassured_Gliding_Ratio return Natural is
+   begin
+
+      if Meassured_Gliding_Ratio < -0.01 then
+
+         return Natural (1.0 / abs Meassured_Gliding_Ratio);
+
+      else
+
+         return 0;
+
+      end if;
+
+   end Get_Meassured_Gliding_Ratio;
+   -----------------------------------------------------------------------------
+
+
 end Flight.Register;
 --------------------------------------------------------------------------------

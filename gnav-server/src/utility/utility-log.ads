@@ -45,5 +45,11 @@ package Utility.Log is
    --===========================================================================
    procedure Log_Error (Message : String; E : Exception_Occurrence);
 
+   --===========================================================================
+   -- Writes the track data in a local file
+   -- NOTE: this might come from a G-NAV user or an OGN track with local device
+   --===========================================================================
+   procedure Log_Track_Data (Id : String; Track_Data : String);
+
 end Utility.Log;
 --------------------------------------------------------------------------------

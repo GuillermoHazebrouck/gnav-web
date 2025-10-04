@@ -27,6 +27,7 @@ with Display.Panels.Gauges;
 with Glex.Colors;
 use  Glex.Colors;
 with Glex.Fonts;
+with Glex.Symbols;
 with Flight.Plan;
 use  Flight.Plan;
 with Utility.Strings;
@@ -166,11 +167,9 @@ package body Display.Pages.Strips is
       
       Btn_Up.Set_Allocation (Allocation);
       
-      Btn_Up.Set_Label ("}");
+      Btn_Up.Set_Symbol (Glex.Symbols.Triangle_Up);
       
       Btn_Up.Set_Style (Button_Action);     
-      
-      Btn_Up.Set_Font_Size (0.6, 0.5);
       
       -- Change active waypoint one position downwards
       -------------------------------------------------
@@ -179,12 +178,10 @@ package body Display.Pages.Strips is
       
       Btn_Down.Set_Allocation (Allocation);
       
-      Btn_Down.Set_Label ("{");
+      Btn_Down.Set_Symbol (Glex.Symbols.Triangle_Down);
       
       Btn_Down.Set_Style (Button_Action);      
       
-      Btn_Down.Set_Font_Size (0.6, 0.5);
-    
       -- Back route button
       -------------------------------------------------
       

@@ -575,11 +575,19 @@ package body Display.Panels.Gauges is
 
       if Flight.Data.Is_Recent (Flight.Field_Elevation) then
 
+         if    Flight.Data.Elevation > 300.0 then
+            Line_Color := Line_Yellow;
+         elsif Flight.Data.Elevation > 100.0 then
+            Line_Color := Line_Orange;
+         else
+            Line_Color := Line_Gray;
+         end if;
+
          Glex.Fonts.Draw (Utility.Strings.Float_Image (Convert (Flight.Data.Elevation, Unit_Meter, Altitude_Unit), 0),
                           0.935,
                           0.630,
                           Font_1,
-                          Line_Gray,
+                          Line_Color,
                           Glex.Fonts.Alignment_LR);
 
       else

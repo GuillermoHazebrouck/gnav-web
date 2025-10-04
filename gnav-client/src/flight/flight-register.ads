@@ -79,6 +79,12 @@ package Flight.Register is
    --===========================================================================
    function Get_Register (Index : Register_Range) return not null access Register_Record;
    
+   --===========================================================================
+   -- The meassured gliding ratio during the last straight flight block 
+   -- (the maximum value is 100)
+   --===========================================================================
+   function Get_Meassured_Gliding_Ratio return Natural;
+   
 private
 
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

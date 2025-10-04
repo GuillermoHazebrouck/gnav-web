@@ -53,21 +53,29 @@ package body Widgets.Button is
 
          Widget_Record (This).Draw;
 
-         if This.Length in This.Label'Range then
+         if This.Length in This.Label'Range or else This.Symbol /= None then
 
             -- Draw the text
             --------------------------------------------------------------------------
             S.Height := This.Font_Size * A.H;
 
-            S.Width  := This.Width_Ratio * S.Height;
-
-            S.Space  := This.Space_Ratio * S.Width;
-
             X := A.X + 0.5 * A.W;
 
             Y := A.Y + 0.5 * A.H;
 
-            Glex.Fonts.Draw (This.Label (1..This.Length), X, Y, S, This.Font_Color, Glex.Fonts.Alignment_CC);
+            if This.Symbol /= None then
+
+               Glex.Symbols.Draw (This.Symbol, X, Y, S.Height, This.Font_Color.Fore, Glex.Fonts.Alignment_CC, Glex.Symbols.Size_Height);
+
+            else
+
+               S.Width  := This.Width_Ratio * S.Height;
+
+               S.Space  := This.Space_Ratio * S.Width;
+
+               Glex.Fonts.Draw (This.Label (1..This.Length), X, Y, S, This.Font_Color, Glex.Fonts.Alignment_CC);
+
+            end if;
 
          end if;
 
@@ -96,6 +104,8 @@ package body Widgets.Button is
 
       This.Width_Ratio     := 0.5;
       This.Space_Ratio     := 0.7;
+
+      This.Symbol          := None;
 
    end Initialize;
    -----------------------------------------------------------------------------
@@ -157,7 +167,23 @@ package body Widgets.Button is
 
       end if;
 
+      This.Symbol := None;
+
    end Set_Label;
+   -----------------------------------------------------------------------------
+
+
+
+
+   --===========================================================================
+   -- (See specification file)
+   --===========================================================================
+   procedure Set_Symbol (This : in out Button_Record; Symbol : Symbol_Kinds) is
+   begin
+
+      This.Symbol := Symbol;
+
+   end Set_Symbol;
    -----------------------------------------------------------------------------
 
 

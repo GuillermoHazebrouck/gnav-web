@@ -58,7 +58,17 @@ package Maps.Terrain is
    --===========================================================================
    -- Indicates when the terrain is loaded
    --===========================================================================
-   On_Loaded : Utility.Events.Event_Stack;
+   On_Loaded : Utility.Events.Event_Stack (4);
+
+   --===========================================================================
+   -- Indicates if the terrain must be loaded in high resolution (2x)
+   --===========================================================================
+   function Get_High_Resolution return Boolean;
+
+   --===========================================================================
+   -- Indicates if the terrain must be loaded in high resolution (2x)
+   --===========================================================================
+   procedure Set_High_Resolution (Value : Boolean);
 
 private
 
@@ -106,7 +116,7 @@ private
 
    -- The terrain colormap
    --------------------------------
-   Colormap : Glex.Colormap.Resource_Type;
+   Colormaps : array (1..2) of Glex.Colormap.Resource_Type;
 
    -- Forces a graphic reload
    --------------------------------
@@ -127,6 +137,10 @@ private
    -- Upper vertical limit (meters)
    --------------------------------
    Z_Max_Global : Float := 0.0;
+
+   --
+   --------------------------------
+   High_Resolution : Boolean := False;
 
 end Maps.Terrain;
 --------------------------------------------------------------------------------

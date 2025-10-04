@@ -21,6 +21,8 @@
 -- Depencencies
 --//////////////////////////////////////////////////////////////////////////////
 -- Gnav
+with Gnav_Info;
+use  Gnav_Info;
 with Utility.Calendar;
 use  Utility.Calendar;
 
@@ -75,16 +77,6 @@ package Flight.Traffic is
    procedure Maintain_Tracks;
 
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   --
-   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   subtype Traffic_Id is String (1..6);
-   
-   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   --
-   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   No_Traffic_Id : constant Traffic_Id := (others => ' ');
-   
-   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    -- Different kind of traffic (based on FLARM ICD)
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    type Traffic_Type is (Uknonwn,
@@ -131,6 +123,10 @@ package Flight.Traffic is
       
       Coasted       : Boolean;
       
+      Tailmark      : Tm_Type;
+      
+      Pilot         : Tm_Type;
+      
    end record;
    
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -146,6 +142,8 @@ package Flight.Traffic is
                                                    Vario         => 0.0,      
                                                    Course        => 0.0, 
                                                    Rotation      => 0.0,
+                                                   Tailmark      => No_Tm,
+                                                   Pilot         => No_Tm,
                                                    No_Track      => False,
                                                    Coasted       => False);
         
@@ -154,5 +152,10 @@ package Flight.Traffic is
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    Traffic_Data : array (1..100) of Traffic_Record := (others => No_Traffic_Record);
       
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   -- Number of tracks
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   Number_Of_Tracks : Natural := 0;
+   
 end Flight.Traffic;
 --------------------------------------------------------------------------------

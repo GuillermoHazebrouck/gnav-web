@@ -98,12 +98,12 @@ package body Gnav_Admin_Callbacks is
                                   Filename     => "files/gnav_logo.png");
 
       --------------------------------------------------------------------------
-      -- Recording data
+      -- Screenshot
       --------------------------------------------------------------------------
-      elsif Content = "/style.css" then
+      elsif Content = "/screenshot.jpg" then
 
-         Answer := Response.File (Content_Type => "text/css",
-                                  Filename     => "files/style.css");
+         Answer := Response.File (Content_Type => "image/jpg",
+                                  Filename     => "files/screenshot.jpg");
 
       --------------------------------------------------------------------------
       -- Search request
@@ -129,6 +129,9 @@ package body Gnav_Admin_Callbacks is
 
       --------------------------------------------------------------------------
       -- Search request
+      -- The Squawk can be:
+      -- > 8 character user ID
+      -- > 6 character local device name (a local registration like OO-YZP)
       --------------------------------------------------------------------------
       elsif Content = "/search.html" then
 
@@ -142,7 +145,7 @@ package body Gnav_Admin_Callbacks is
 
             Log_Trace ("recording request for " & Squawk & " at " & Server);
 
-            if Squawk'Length = 8 and Server'Length = 4 then
+            if (Squawk'Length = 6 or Squawk'Length = 8) and Server'Length = 4 then
 
                -- Send the list of files using hyperlinks
                -----------------------------------------------------------------
@@ -198,7 +201,7 @@ package body Gnav_Admin_Callbacks is
 
                      if Empty then
 
-                        Put_Line (File_Id, "<p>There are still no entries for this SQUAWK!</p>");
+                        Put_Line (File_Id, "<p>There are still no entries for code " & Squawk & " in server " & Server & ". <a href=""/search.html"">Go back to search</a>.</p>");
 
                      end if;
 

@@ -55,7 +55,7 @@ procedure Gnav_Server is
    Port_Number : Natural := 4433;
    Web_Server  : Server.Http;
    Ssl_Config  : Net.Ssl.Config;
-   Version     : constant String := "1L";
+   Version     : constant String := "3A";
    Admin_Mode  : Boolean := False;
 
 begin
@@ -148,8 +148,13 @@ begin
       --------------------------------------------------------------------------
       Traffic.Ogn.Start_Updating;
 
+      -- Trace some stats
+      --------------------------------------------------------------------------
       loop
-         delay 5.0;
+         delay 3600.0;
+         Log_Trace ("stats:" & Natural'Image (Gnav_Server_Callbacks.Server_Stats.Get_Number_Of_Wasm_Requests) &
+                               Natural'Image (Gnav_Server_Callbacks.Server_Stats.Get_Number_Of_Aprs_Requests));
+         Gnav_Server_Callbacks.Server_Stats.Reset;
       end loop;
 
    end if;

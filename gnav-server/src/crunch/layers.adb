@@ -45,6 +45,202 @@ use  Utility.Streams;
 --//////////////////////////////////////////////////////////////////////////////
 package body Layers is
 
+   --===========================================================================
+   --
+   --===========================================================================
+   procedure Count_Right_Crossing (X, Y    : Long_Float;
+                                   A, B    : Vector2_Access;
+                                   Add     : in out Boolean;
+                                   Counter : in out Natural) is
+   begin
+
+      -- Check if the segment is fully at the left of the point
+      ----------------------------------------------------------
+      if A.Get_X < X and then B.Get_X < X then
+
+         return;
+
+      end if;
+
+      -- Segment is at the right, check if the ray crosses it
+      ----------------------------------------------------------
+      declare
+         Y_A, Y_B : Long_Float;
+      begin
+
+         Y_A := A.Get_Y - Y;
+         Y_B := B.Get_Y - Y;
+
+         if
+           (Y_A >= 0.0 and Y_B <  0.0) or else
+           (Y_A <  0.0 and Y_B >= 0.0)
+         then
+
+            if A.Get_X > X and then B.Get_X > X then
+
+               if Add then
+                  Counter := Counter + 1;
+                  Add := False;
+               else
+                  Counter := Counter - 1;
+                  Add := True;
+               end if;
+
+            else
+
+               declare
+                  X_A, D_X, D_Y, X_C : Long_Float;
+               begin
+
+                  X_A := A.Get_X - X;
+                  D_X := B.Get_X - A.Get_X;
+                  D_Y := Y_B - Y_A;
+                  X_C := X_A + D_X * abs (Y_A / D_Y);
+
+                  if X_C > 0.0 then -- (right crossings only)
+
+                     if Add then
+                        Counter := Counter + 1;
+                        Add := False;
+                     else
+                        Counter := Counter - 1;
+                        Add := True;
+                     end if;
+
+                  end if;
+
+               end;
+
+            end if;
+
+         end if;
+
+      end;
+
+   end Count_Right_Crossing;
+   pragma Inline (Count_Right_Crossing);
+   -----------------------------------------------------------------------------
+
+
+
+
+   --===========================================================================
+   -- (See specification file)
+   --===========================================================================
+   function Contains (This : Layer_Record; Position : Position_Record) return Boolean is
+
+      Part : Part_Access;
+
+   begin
+
+      -- Check if the point is within the layer bounds
+      --------------------------------------------------------------------------
+      if
+        This.Parts.Get_Count > 0           and then
+        This.Form = Form_Polygon           and then
+        This.North_East.Lon > Position.Lon and then
+        This.North_East.Lat > Position.Lat and then
+        This.South_West.Lon < Position.Lon and then
+        This.South_West.Lat < Position.Lat
+      then
+
+         Part := This.Parts.Get_First_Item;
+
+         while Part /= null loop
+
+            if
+              Part.Points.Get_Count > 2          and then
+              Part.North_East.Lon > Position.Lon and then
+              Part.North_East.Lat > Position.Lat and then
+              Part.South_West.Lon < Position.Lon and then
+              Part.South_West.Lat < Position.Lat
+            then
+
+               declare
+                  A, B    : Vector2_Access;
+                  Add     : Boolean := True;
+                  Counter : Natural := 0;
+               begin
+
+                  A := Part.Points.Get_Last_Item;
+                  B := Part.Points.Get_First_Item;
+
+                  while B /= null loop
+
+                     Count_Right_Crossing (Position.Lon, Position.Lat, A, B, Add, Counter);
+
+                     A := B;
+
+                     Part.Points.Get_Next_Item (B);
+
+                  end loop;
+
+                  if Counter /= 0 then
+                     return True;
+                  end if;
+
+               end;
+
+            end if;
+
+            This.Parts.Get_Next_Item (Part);
+
+         end loop;
+
+      end if;
+
+      return False;
+
+   end Contains;
+   -----------------------------------------------------------------------------
+
+
+
+
+   --===========================================================================
+   -- Indicates if there are lines or polygons loaded
+   --===========================================================================
+   function Is_Empty return Boolean is
+   begin
+
+      return Layers.Get_Count = 0;
+
+   end Is_Empty;
+   -----------------------------------------------------------------------------
+
+
+
+
+   --===========================================================================
+   -- Indicates if the given point is contained by one of the layers
+   --===========================================================================
+   function Contains (Point : Position_Record) return Boolean is
+
+      Layer : Layer_Access;
+
+   begin
+
+      Layer := Layers.Get_First_Item;
+
+      while Layer /= null loop
+
+         if Layer.Contains (Point) then
+
+            return True;
+
+         end if;
+
+         Layers.Get_Next_Item (Layer);
+
+      end loop;
+
+      return False;
+
+   end Contains;
+   -----------------------------------------------------------------------------
+
+
+
 
    --===========================================================================
    -- Reads and loads the content of the shape file
@@ -54,11 +250,11 @@ package body Layers is
                             Parts_Count  : Integer;
                             Points_Count : Integer) is
 
-      type Position_Record_Array is array (1..Points_Count) of Position_Record;
+      type Position_Record_Array is array (Positive range <>) of Position_Record;
 
       Parts  : array (1..Parts_Count) of Integer;
 
-      Points : Position_Record_Array;
+      Points : Position_Record_Array (1..Points_Count);
 
       First  : Positive := Points'First;
 
@@ -103,8 +299,6 @@ package body Layers is
 
          Integer'Read (Source, Parts (I));
 
-         -- Utility.Log.Put_Message ("part at" & Integer'Image (Parts (I)));
-
       end loop;
 
       for J in 1..Points_Count loop
@@ -115,23 +309,17 @@ package body Layers is
 
       end loop;
 
-      -- Utility.Log.Put_Message ("loading part");
-
-      -- Utility.Log.Put_Message (Image (Points (Points'First)));
-
-      -- Utility.Log.Put_Message (Image (Points (Points'Last)));
-
       for I in 1..Parts_Count loop
 
          First := Parts (I) + 1;
 
          if I = Parts_Count then
 
-            Last  := Points'Last;
+            Last := Points'Last;
 
          else
 
-            Last  := Parts (I + 1);
+            Last := Parts (I + 1);
 
          end if;
 
@@ -144,6 +332,7 @@ package body Layers is
       when E : others =>
 
          Ada.Text_IO.Put_Line ("error while reading shape part");
+         Ada.Text_IO.Put_Line ("message: " & Ada.Exceptions.Exception_Message (E));
 
    end Load_Geometry;
    -----------------------------------------------------------------------------
@@ -359,6 +548,18 @@ package body Layers is
               Pattern   => "*.shp",
               Process   => Process_Shape_File'Access);
 
+      Compute_Bounds (Layers);
+
+      declare
+         South_West,
+         North_East : Position_Record;
+      begin
+         Ada.Text_Io.Put_Line ("computing global bounds");
+         Compute_Global_Bounds (Layers, South_West, North_East);
+         Ada.Text_IO.Put_Line ("NE: " & Image (North_East));
+         Ada.Text_IO.Put_Line ("SW: " & Image (South_West));
+      end;
+
    end Load_Shape_Files;
    -----------------------------------------------------------------------------
 
@@ -368,7 +569,7 @@ package body Layers is
    --===========================================================================
    -- Scans all the data, finds the local bounds and returns the global bounds
    --===========================================================================
-   procedure Search_Global_Bounds (South_West, North_East : out Position_Record) is
+   procedure Compute_Bounds (List : Layer_List.Stack) is
 
       use Math.Vector2;
 
@@ -376,36 +577,38 @@ package body Layers is
       Part  : Part_Access;
       Point : Vector2_Access;
 
-      First_Global : Boolean := True;
-      First_Local  : Boolean := True;
+      First_In_Layer : Boolean := True;
+      First_In_Part  : Boolean := True;
 
    begin
 
-      South_West := (0.0, 0.0);
-      North_East := (0.0, 0.0);
-
-      Layer := Layers.Get_First_Item;
+      Layer := List.Get_First_Item;
 
       while Layer /= null loop
+
+         First_In_Layer := True;
 
          Part := Layer.Parts.Get_First_Item;
 
          while Part /= null loop
 
-            First_Local := True;
+            -- Part bounds
+            --------------------------------------------------------------------
+
+            First_In_Part := True;
 
             Point := Part.Points.Get_First_Item;
 
             while Point /= null loop
 
-               if First_Local then
+               if First_In_Part then
 
                   Part.South_West.Lon := Point.Get_X;
                   Part.South_West.Lat := Point.Get_Y;
 
                   Part.North_East := Part.South_West;
 
-                  First_Local := False;
+                  First_In_Part := False;
 
                else
 
@@ -431,7 +634,78 @@ package body Layers is
 
             end loop;
 
-            if First_Global then
+            if Part.Points.Get_Count > 1 then
+
+               -- Layer bounds
+               -----------------------------------------------------------------
+               if First_In_Layer then
+
+                  Layer.South_West := Part.South_West;
+                  Layer.North_East := Part.North_East;
+
+                  First_In_Layer := False;
+
+               else
+
+                  if Part.South_West.Lon < Layer.South_West.Lon then
+                     Layer.South_West.Lon := Part.South_West.Lon;
+                  end if;
+
+                  if Part.South_West.Lat < Layer.South_West.Lat then
+                     Layer.South_West.Lat := Part.South_West.Lat;
+                  end if;
+
+                  if Part.North_East.Lon > Layer.North_East.Lon then
+                     Layer.North_East.Lon := Part.North_East.Lon;
+                  end if;
+
+                  if Part.North_East.Lat > Layer.North_East.Lat then
+                     Layer.North_East.Lat := Part.North_East.Lat;
+                  end if;
+
+               end if;
+
+            end if;
+
+            Layer.Parts.Get_Next_Item (Part);
+
+         end loop;
+
+         List.Get_Next_Item (Layer);
+
+      end loop;
+
+   end Compute_Bounds;
+   -----------------------------------------------------------------------------
+
+
+
+
+   --===========================================================================
+   -- Scans all the data, finds the local bounds and returns the global bounds
+   --===========================================================================
+   procedure Compute_Global_Bounds (List : Layer_List.Stack; South_West, North_East : out Position_Record) is
+
+      use Math.Vector2;
+
+      Layer : Layer_Access;
+      Part  : Part_Access;
+      First : Boolean := True;
+
+   begin
+
+      South_West := (0.0, 0.0);
+      North_East := (0.0, 0.0);
+
+      Layer := List.Get_First_Item;
+
+      while Layer /= null loop
+
+         Part := Layer.Parts.Get_First_Item;
+
+         while Part /= null loop
+
+            if First then
 
                South_West.Lon := Part.South_West.Lon;
                South_West.Lat := Part.South_West.Lat;
@@ -439,7 +713,7 @@ package body Layers is
                North_East.Lon := Part.North_East.Lon;
                North_East.Lat := Part.North_East.Lat;
 
-               First_Global := False;
+               First := False;
 
             else
 
@@ -465,11 +739,11 @@ package body Layers is
 
          end loop;
 
-         Layers.Get_Next_Item (Layer);
+         List.Get_Next_Item (Layer);
 
       end loop;
 
-   end Search_Global_Bounds;
+   end Compute_Global_Bounds;
    -----------------------------------------------------------------------------
 
 
@@ -497,7 +771,10 @@ package body Layers is
 
       if Layers.Get_Count > 0 then
 
-         Search_Global_Bounds (South_West, North_East);
+         Ada.Text_Io.Put_Line ("computing global bounds");
+         Compute_Global_Bounds (Layers, South_West, North_East);
+         Ada.Text_IO.Put_Line ("NE: " & Image (North_East));
+         Ada.Text_IO.Put_Line ("SW: " & Image (South_West));
 
          Origin.Lat := 0.5 * (South_West.Lat + North_East.Lat);
          Origin.Lon := 0.5 * (South_West.Lon + North_East.Lon);

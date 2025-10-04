@@ -22,6 +22,8 @@
 --//////////////////////////////////////////////////////////////////////////////
 with Interfaces;
 use  Interfaces;
+with Utility.Log;
+with Utility.Strings;
 
 
 --//////////////////////////////////////////////////////////////////////////////
@@ -32,7 +34,12 @@ package body Utility.Notifications is
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    --
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   Notify : array (Notification_Kinds) of Boolean;
+   Cycle : Natural := 1;
+
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   -- NOTE: start-up sound set to true
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   Notify : array (Notification_Kinds) of Boolean := (Notify_100m => True, others => False);
 
    --===========================================================================
    -- (See specification file)
@@ -51,24 +58,35 @@ package body Utility.Notifications is
    --===========================================================================
    -- (See specification file)
    --===========================================================================
-   function Dequeue_Next return Interfaces.Unsigned_8 is
+   function Dequeue_Next return Interfaces.Integer_64 is
    begin
 
-      for Kind in Notification_Kinds loop
+      if Cycle = 0 then
 
-         if Notify (Kind) then
+         for Kind in Notification_Kinds loop
 
-            Notify (Kind) := False;
+            if Notify (Kind) then
 
-            case Kind is
-               when Notify_Sector => return 1;
-               when Notify_Sink   => return 2;
-               when Notify_Range  => return 3;
-            end case;
+               Notify (Kind) := False;
 
-         end if;
+               Cycle := 1;
 
-      end loop;
+               case Kind is
+                  when Notify_Sector   => return 1;
+                  when Notify_Sink     => return 2;
+                  when Notify_Range    => return 3;
+                  when Notify_100m     => return 4;
+                  when Notify_Waypoint => return 5;
+               end case;
+
+            end if;
+
+         end loop;
+
+      else
+         Cycle := Cycle - 1;
+
+      end if;
 
       return 0;
 

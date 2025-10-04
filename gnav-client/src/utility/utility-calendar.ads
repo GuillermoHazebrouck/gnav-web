@@ -132,6 +132,11 @@ package Utility.Calendar is
    function Seconds (Lapse : Lapses) return Float;
 
    --===========================================================================
+   -- The total lapse in hours (precision is lost for high lapses)
+   --===========================================================================
+   function Hours (Lapse : Lapses) return Float;
+
+   --===========================================================================
    -- Returns the amount of time between two moments
    --===========================================================================
    function "-" (Time_1 : Times; Time_2 : Times) return Lapses;

@@ -42,5 +42,26 @@ package Gnav_Server_Callbacks is
    --===========================================================================
    function Set_Password (File : String) return String;
 
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   -- Server stats (with thread synchoronization)
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   protected Server_Stats is
+
+      function Get_Number_Of_Wasm_Requests return Natural;
+      function Get_Number_Of_Aprs_Requests return Natural;
+
+      procedure Increase_Number_Of_Wasm_Requests;
+      procedure Increase_Number_Of_Aprs_Requests;
+
+      procedure Reset;
+
+   private
+
+      Number_Of_Wasm_Requests : Natural := 0;
+      Number_Of_Aprs_Requests : Natural := 0;
+
+   end Server_Stats;
+   ----------------------------------------------------------------------------
+
 end Gnav_Server_Callbacks;
 --------------------------------------------------------------------------------

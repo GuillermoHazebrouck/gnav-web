@@ -99,6 +99,10 @@ package body Glex.Symbols is
             Buffer.Load_Node (1.00, 0.50);
             Buffer.Load_Node (0.50, 1.00);
 
+         when others =>
+
+            return;
+
       end case;
 
       Resources (S).Load (Buffer);
@@ -136,7 +140,8 @@ package body Glex.Symbols is
                    X, Y      : Float;
                    Size      : Float;
                    Color     : Color_Record;
-                   Alignment : Font_Alignment_Types := Alignment_CC) is
+                   Alignment : Font_Alignment_Types := Alignment_CC;
+                   Sizing    : Sizing_Kinds := Size_Width) is
 
       use Glex;
 
@@ -147,6 +152,11 @@ package body Glex.Symbols is
       Height : Float := Size * Aspect;
 
    begin
+
+      if Sizing = Size_Height and then Aspect > 0.0 then
+         Width  := Size / Aspect;
+         Height := Size;
+      end if;
 
       case Alignment is
 
@@ -192,7 +202,7 @@ package body Glex.Symbols is
 
          when others =>
 
-            null;
+            return;
 
       end case;
 

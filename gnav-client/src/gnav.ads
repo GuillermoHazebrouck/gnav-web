@@ -112,7 +112,7 @@ package Gnav is
    --===========================================================================
    -- Returns the requested notification code
    --===========================================================================
-   function Gnav_Notification_Request return Interfaces.Unsigned_8
+   function Gnav_Notification_Request return Interfaces.Integer_64
      with Export      => True,
           Convention  => C,
           Link_Name   => "Gnav_Notification_Request";

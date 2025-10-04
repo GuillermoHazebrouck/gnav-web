@@ -6,13 +6,12 @@ project crunch is
    for Main use ("crunch.adb");
 
    package Binder is
-   for Default_Switches ("Ada") use ("-static");
-   -- -static/-shared makes the gnat runtime static or shared
+      for Default_Switches ("Ada") use ("-static");
    end Binder;
 
    package Builder is
       for Default_Switches ("Ada") use ("-gnat12");
-      for Executable ("crunch.adb") use "../../../server/files/data/gnav_crunch";
+      for Executable ("crunch.adb") use "../../../server/files/data/source/gnav_crunch";
    end Builder;
 
 end crunch;

@@ -30,6 +30,7 @@ use  Flight;
 with Flight.Plan;
 use  Flight.Plan;
 with Flight.Traffic;
+with Gnav_Info;
 with Glex.Basic;
 with Glex.Colors;
 use  Glex.Colors;
@@ -317,7 +318,19 @@ package body Flight.Representation is
    -- (See specification file)
    --===========================================================================
    procedure Draw_Trajectory (View : Map_View_Record) is
+
+      Color : Color_Record;
+
    begin
+
+      if View.Show_Terrain then
+
+         Color := Color_Gray_2;
+
+      else
+         Color := Color_White;
+
+      end if;
 
       Check_Trajectory_Reset;
 
@@ -325,7 +338,7 @@ package body Flight.Representation is
 
       for I in Cluster_Range loop
 
-         Clusters (I).Draw (Color_Gray_2, 0.002 * View.Zoom);
+         Clusters (I).Draw (Color, 0.002 * View.Zoom);
 
       end loop;
 
@@ -500,7 +513,14 @@ package body Flight.Representation is
    procedure Draw_Airplane (View : Map_View_Record) is
    begin
 
-      Draw_Airplane (View, Flight.Data.Position, Flight.Data.Course);
+      if Flight.Data.Is_Valid (Field_Heading) then
+
+         Draw_Airplane (View, Flight.Data.Position, Flight.Data.Heading);
+
+      else
+         Draw_Airplane (View, Flight.Data.Position, Flight.Data.Course);
+
+      end if;
 
    end Draw_Airplane;
    -----------------------------------------------------------------------------
@@ -509,11 +529,21 @@ package body Flight.Representation is
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    --
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   Font  : constant Glex.Fonts.Font_Style_Record := (Width     => 0.007,
-                                                     Height    => 0.020,
-                                                     Space     => 0.004,
-                                                     Rendering => Glex.Fonts.Font_Simple,
-                                                     Thickness => Glex.Fonts.Font_Regular);
+   Font_1  : constant Glex.Fonts.Font_Style_Record := (Width     => 0.007,
+                                                       Height    => 0.020,
+                                                       Space     => 0.004,
+                                                       Rendering => Glex.Fonts.Font_Simple,
+                                                       Thickness => Glex.Fonts.Font_Regular);
+
+
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   --
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   Font_2  : constant Glex.Fonts.Font_Style_Record := (Width     => 0.007,
+                                                       Height    => 0.020,
+                                                       Space     => 0.004,
+                                                       Rendering => Glex.Fonts.Font_Glow,
+                                                       Thickness => Glex.Fonts.Font_Bold);
 
    --===========================================================================
    --
@@ -572,7 +602,7 @@ package body Flight.Representation is
                   N    : Float  := Float (Text'Length);
                begin
 
-                  Draw_Label (X, Y - 0.080, N * 0.011 + 0.008, 0.034, Color_Black);
+                  Draw_Label (X, Y - 0.080, N * 0.011 + 0.008, 0.04, Color_Black);
 
                   if    Traffic.Vario >  0.8 then
                      Line := Line_Green;
@@ -585,11 +615,51 @@ package body Flight.Representation is
                   Glex.Fonts.Draw (Text,
                                    X,
                                    Y - 0.080,
-                                   Font,
+                                   Font_1,
                                    Line,
                                    Alignment_CC);
 
                end;
+
+               if Traffic.Tailmark /= Gnav_Info.No_Tm then
+
+                  if Traffic.Pilot = Gnav_Info.No_Tm then
+
+                     Glex.Fonts.Draw (Traffic.Tailmark,
+                                      X,
+                                      Y - 0.120,
+                                      Font_2,
+                                      Line_Yellow,
+                                      Alignment_CC);
+
+                  else
+
+                     Glex.Fonts.Draw (Traffic.Tailmark,
+                                      X - 0.012,
+                                      Y - 0.120,
+                                      Font_2,
+                                      Line_Yellow,
+                                      Alignment_CC);
+
+                     Glex.Fonts.Draw (Traffic.Pilot,
+                                      X + 0.012,
+                                      Y - 0.120,
+                                      Font_2,
+                                      Line_White,
+                                      Alignment_CC);
+
+                  end if;
+
+               elsif Traffic.Pilot /= Gnav_Info.No_Tm then
+
+                  Glex.Fonts.Draw (Traffic.Pilot,
+                                   X,
+                                   Y - 0.120,
+                                   Font_2,
+                                   Line_White,
+                                   Alignment_CC);
+
+               end if;
 
             end if;
 

@@ -71,12 +71,6 @@ package Flight.Wind is
    -- Sets a metar entry for the wind. The value will be used when the source
    -- is set to metar.
    --===========================================================================
-   procedure Set_Metar_Wind (Value : String; Time : Times);
-
-   --===========================================================================
-   -- Sets a metar entry for the wind. The value will be used when the source
-   -- is set to metar.
-   --===========================================================================
    procedure Set_Metar_Wind (Speed, Course : Float; Time : Times);
 
    --===========================================================================
@@ -93,6 +87,16 @@ package Flight.Wind is
    -- The actual method used for the computation of the wind
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    Computation_Mode : Wind_Computation_Mode := Wind_Computation_Path_Drift;
+
+   --===========================================================================
+   -- Loads the wind from a stored value
+   --===========================================================================
+   procedure Read_Wind;
+
+   --===========================================================================
+   -- Saves the current wind to the storage
+   --===========================================================================
+   procedure Save_Wind;
 
 private
 

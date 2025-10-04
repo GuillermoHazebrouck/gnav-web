@@ -23,12 +23,14 @@
 -- Standard
 -- Gnav
 with Display.Pages.Navigation;
-with Display.Pages.System;
+with Display.Pages.Menu;
 with Display.Pages.Strips;
 with Flight.Aircraft;
 with Flight.Plan;
+with Flight.Wind;
 with Glex.Colors;
 use  Glex.Colors;
+with Utility.Strings;
 with Widgets.Widget;
 use  Widgets.Widget;
 with Widgets.Button;
@@ -39,14 +41,14 @@ with Widgets.Keyboard;
 --//////////////////////////////////////////////////////////////////////////////
 --
 --//////////////////////////////////////////////////////////////////////////////
-package body Display.Menu is
+package body Display.Main is
    
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    -- The five front panel keys
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    type Page_Types is (Page_Navigation,
                        Page_Strips,
-                       Page_System);
+                       Page_Menu);
    
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    --
@@ -58,7 +60,7 @@ package body Display.Menu is
 
    Btn_Strips  : Button_Record;
    
-   Btn_Check   : Button_Record;
+   Btn_Menu    : Button_Record;
    
    Btn_Exit    : Button_Record;
    
@@ -104,7 +106,7 @@ package body Display.Menu is
        
       -- Checklist page button
       ------------------------------------------------------
-      Btn_Check.Set_Label ("CHECK");
+      Btn_Menu.Set_Label ("CHECK");
       
       Allocation.X := 0.005;
       
@@ -112,14 +114,14 @@ package body Display.Menu is
       
       Allocation.W := W;
       
-      Btn_Check.Set_Allocation (Allocation);
+      Btn_Menu.Set_Allocation (Allocation);
             
-      Btn_Check.Set_Background_Color (Color_Gray_5);
+      Btn_Menu.Set_Background_Color (Color_Gray_5);
       
-      Btn_Check.Set_Label_Color (Fore => Color_White,
+      Btn_Menu.Set_Label_Color (Fore => Color_White,
                                  Glow => Color_Black);
       
-      Btn_Check.Set_Font_Size (0.3, 0.3);
+      Btn_Menu.Set_Font_Size (0.3, 0.3);
 
       -- Checklist page button
       ------------------------------------------------------      
@@ -145,7 +147,7 @@ package body Display.Menu is
       
       Display.Pages.Strips.Initialize;
       
-      Display.Pages.System.Initialize;
+      Display.Pages.Menu.Initialize;
       
    end Initialize;
    -----------------------------------------------------------------------------
@@ -170,7 +172,9 @@ package body Display.Menu is
             
             Btn_Strips.Draw;
             
-            Btn_Check.Draw;
+            Btn_Menu.Set_Label (Utility.Strings.Trim (Flight.Aircraft.This_Aircraft.Model));
+              
+            Btn_Menu.Draw;
          
          when Page_Strips =>
 
@@ -178,9 +182,9 @@ package body Display.Menu is
                
             Btn_Exit.Draw;
              
-         when Page_System =>
+         when Page_Menu =>
             
-            Display.Pages.System.Draw;
+            Display.Pages.Menu.Draw;
             
             Btn_Exit.Draw;
                
@@ -228,9 +232,9 @@ package body Display.Menu is
          
             return;
              
-         elsif Btn_Check.Contains (X, Y) then
+         elsif Btn_Menu.Contains (X, Y) then
          
-            Active_Page := Page_System;
+            Active_Page := Page_Menu;
       
             Display.Refresh := True;
          
@@ -240,11 +244,13 @@ package body Display.Menu is
           
       elsif Btn_Exit.Contains (X, Y) then
       
-         if Active_Page = Page_System then
+         if Active_Page = Page_Menu then
             
             Flight.Aircraft.Save_Configuration;
             
             Flight.Aircraft.Calculate_Gliding_States;
+            
+            Flight.Wind.Save_Wind;
             
          elsif Active_Page = Page_Strips then
             
@@ -289,9 +295,9 @@ package body Display.Menu is
 
             Display.Pages.Strips.Screen_Pressed (X, Y);
        
-         when Page_System =>
+         when Page_Menu =>
             
-            Display.Pages.System.Screen_Pressed (X, Y);
+            Display.Pages.Menu.Screen_Pressed (X, Y);
             
          when others =>
             
@@ -315,9 +321,9 @@ package body Display.Menu is
       
       case Active_Page is
 
-         when Page_System =>
+         when Page_Menu =>
             
-            Display.Pages.System.Screen_Move (X, Y, Dx, Dy, First);
+            Display.Pages.Menu.Screen_Move (X, Y, Dx, Dy, First);
             
          when Page_Navigation =>
             
@@ -331,5 +337,5 @@ package body Display.Menu is
    end Screen_Move;
    -----------------------------------------------------------------------------
    
-end Display.Menu;
+end Display.Main;
 --------------------------------------------------------------------------------

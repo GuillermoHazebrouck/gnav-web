@@ -121,6 +121,7 @@ package Glex.Colors is
    Line_Orange   : constant Line_Color_Record := (Color_Orange,  Color_Black);
    Line_Gold     : constant Line_Color_Record := (Color_Yellow,  Color_Brown);
    Line_Taxi     : constant Line_Color_Record := (Color_Black,   Color_Yellow);
+   Line_Water    : constant Line_Color_Record := (Color_Water,   Color_Ocean);
 
 end Glex.Colors;
 --------------------------------------------------------------------------------

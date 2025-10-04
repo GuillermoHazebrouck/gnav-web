@@ -29,6 +29,7 @@ with Flight.Representation;
 with Glex.Colors;
 use  Glex.Colors;
 with Glex.Fonts;
+with Glex.Symbols;
 with Math.Vector2;
 use  Math.Vector2;
 with Maps;
@@ -42,6 +43,8 @@ use  Widgets.Button;
 with Widgets.Dialog;
 use  Widgets.Dialog;
 with Widgets.Keyboard;
+with Widgets.Panel;
+use  Widgets.Panel;
 with Widgets.Widget;
 use  Widgets.Widget;
 
@@ -119,6 +122,8 @@ package body Display.Pages.Route_Edition is
 
    Btn_Wypnt_Step      : Button_Record;
 
+   Pnl_Waypoint        : Panel_Record;
+
    -- Name edition system
    -----------------------------------------------------------------------------
 
@@ -130,8 +135,8 @@ package body Display.Pages.Route_Edition is
 
    -- Font for the position
    ---------------------------------
-   Font_1 : Glex.Fonts.Font_Style_Record := (Width     => 0.009,
-                                             Height    => 0.040,
+   Font_1 : Glex.Fonts.Font_Style_Record := (Width     => 0.008,
+                                             Height    => 0.038,
                                              Space     => 0.006,
                                              Rendering => Glex.Fonts.Font_Glow,
                                              Thickness => Glex.Fonts.Font_Regular);
@@ -256,25 +261,21 @@ package body Display.Pages.Route_Edition is
       Allocation.H := 0.90 * H;
       Allocation.Y := Ent_Route.Get_Allocation.Y - H - 0.004;
 
-      Btn_Route_Previous.Set_Label ("<");
+      Btn_Route_Previous.Set_Symbol (Glex.Symbols.Triangle_Left);
 
       Btn_Route_Previous.Set_Allocation (Allocation);
 
       Btn_Route_Previous.Set_Style (Button_Action);
 
-      Btn_Route_Previous.Set_Font_Size (0.5, 0.5);
-
       --
 
       Allocation.X := Btn_Route_Previous.Get_Allocation.X + 0.52 * W;
 
-      Btn_Route_Next.Set_Label (">");
+      Btn_Route_Next.Set_Symbol (Glex.Symbols.Triangle_Right);
 
       Btn_Route_Next.Set_Allocation (Allocation);
 
       Btn_Route_Next.Set_Style (Button_Action);
-
-      Btn_Route_Next.Set_Font_Size (0.5, 0.5);
 
       -- Append or remove route
       ------------------------------------------------------
@@ -318,7 +319,7 @@ package body Display.Pages.Route_Edition is
       Allocation.H := H;
       Allocation.W := W;
       Allocation.X := Ent_Route.Get_Allocation.X;
-      Allocation.Y := Btn_Route_Append.Get_Allocation.Y - H - 0.03;
+      Allocation.Y := Btn_Route_Append.Get_Allocation.Y - H - 0.02;
 
       Ent_Waypoint.Set_Label (Trim (Flight.Plan.Next_Waypoint.Name));
 
@@ -337,26 +338,22 @@ package body Display.Pages.Route_Edition is
       Allocation.H := 0.90 * H;
       Allocation.Y := Ent_Waypoint.Get_Allocation.Y - H - 0.004;
 
-      Btn_Wypnt_Previous.Set_Label ("<");
+      Btn_Wypnt_Previous.Set_Symbol (Glex.Symbols.Triangle_Left);
 
       Btn_Wypnt_Previous.Set_Allocation (Allocation);
 
       Btn_Wypnt_Previous.Set_Style (Button_Action);
-
-      Btn_Wypnt_Previous.Set_Font_Size (0.5, 0.5);
 
       -- Next waypoint
       ------------------------------------------------------
 
       Allocation.X := Btn_Wypnt_Previous.Get_Allocation.X + 0.52 * W;
 
-      Btn_Wypnt_Next.Set_Label (">");
+      Btn_Wypnt_Next.Set_Symbol (Glex.Symbols.Triangle_Right);
 
       Btn_Wypnt_Next.Set_Allocation (Allocation);
 
       Btn_Wypnt_Next.Set_Style (Button_Action);
-
-      Btn_Wypnt_Next.Set_Font_Size (0.5, 0.5);
 
       -- Prepend waypoint
       ------------------------------------------------------
@@ -404,8 +401,8 @@ package body Display.Pages.Route_Edition is
       -- Waypoint move arrows
       ------------------------------------------------------
 
-      H := 0.095;
-      W := 0.055;
+      H := 0.098; --0.095;
+      W := 0.059; --0.055;
 
       C := Ent_Waypoint.Get_Allocation.X + 0.5 * Ent_Waypoint.Get_Allocation.W;
       D := Btn_Wypnt_Prepend.Get_Allocation.Y - 1.5 * H - 0.03;
@@ -418,13 +415,11 @@ package body Display.Pages.Route_Edition is
       Allocation.X := C - 0.5 * W;
       Allocation.Y := D - 1.6 * H;
 
-      Btn_Wypnt_Down.Set_Label ("{");
+      Btn_Wypnt_Down.Set_Symbol (Glex.Symbols.Triangle_Down);
 
       Btn_Wypnt_Down.Set_Allocation (Allocation);
 
       Btn_Wypnt_Down.Set_Label_Color (Color_Magenta);
-
-      Btn_Wypnt_Down.Set_Font_Size (0.5, 0.5);
 
       -- Move up button
       ------------------------------------------------------
@@ -432,13 +427,11 @@ package body Display.Pages.Route_Edition is
       Allocation.X := C - 0.5 * W;
       Allocation.Y := D + 0.6 * H;
 
-      Btn_Wypnt_Up.Set_Label ("}");
+      Btn_Wypnt_Up.Set_Symbol (Glex.Symbols.Triangle_Up);
 
       Btn_Wypnt_Up.Set_Allocation (Allocation);
 
       Btn_Wypnt_Up.Set_Label_Color (Color_Magenta);
-
-      Btn_Wypnt_Up.Set_Font_Size (0.5, 0.5);
 
       -- Move right button
       ------------------------------------------------------
@@ -446,13 +439,11 @@ package body Display.Pages.Route_Edition is
       Allocation.X := C + 0.6 * W;
       Allocation.Y := D - 0.5 * H;
 
-      Btn_Wypnt_Right.Set_Label (">");
+      Btn_Wypnt_Right.Set_Symbol (Glex.Symbols.Triangle_Right);
 
       Btn_Wypnt_Right.Set_Allocation (Allocation);
 
       Btn_Wypnt_Right.Set_Label_Color (Color_Magenta);
-
-      Btn_Wypnt_Right.Set_Font_Size (0.5, 0.5);
 
       -- Move left button
       ------------------------------------------------------
@@ -460,13 +451,11 @@ package body Display.Pages.Route_Edition is
       Allocation.X := C - 1.6 * W;
       Allocation.Y := D - 0.5 * H;
 
-      Btn_Wypnt_Left.Set_Label ("<");
+      Btn_Wypnt_Left.Set_Symbol (Glex.Symbols.Triangle_Left);
 
       Btn_Wypnt_Left.Set_Allocation (Allocation);
 
       Btn_Wypnt_Left.Set_Label_Color (Color_Magenta);
-
-      Btn_Wypnt_Left.Set_Font_Size (0.5, 0.5);
 
       -- Change step button
       ------------------------------------------------------
@@ -502,11 +491,9 @@ package body Display.Pages.Route_Edition is
 
       Btn_View_South.Set_Allocation (Allocation);
 
-      Btn_View_South.Set_Label ("{");
+      Btn_View_South.Set_Symbol (Glex.Symbols.Triangle_Down);
 
       Btn_View_South.Set_Style (Button_Action);
-
-      Btn_View_South.Set_Font_Size (0.5, 0.5);
 
       -- Up button
       ------------------------------------------------------
@@ -516,11 +503,9 @@ package body Display.Pages.Route_Edition is
 
       Btn_View_North.Set_Allocation (Allocation);
 
-      Btn_View_North.Set_Label ("}");
+      Btn_View_North.Set_Symbol (Glex.Symbols.Triangle_Up);
 
       Btn_View_North.Set_Style (Button_Action);
-
-      Btn_View_North.Set_Font_Size (0.5, 0.5);
 
       -- Right button
       ------------------------------------------------------
@@ -530,11 +515,9 @@ package body Display.Pages.Route_Edition is
 
       Btn_View_East.Set_Allocation (Allocation);
 
-      Btn_View_East.Set_Label (">");
+      Btn_View_East.Set_Symbol (Glex.Symbols.Triangle_Right);
 
       Btn_View_East.Set_Style (Button_Action);
-
-      Btn_View_East.Set_Font_Size (0.5, 0.5);
 
       -- Left button
       ------------------------------------------------------
@@ -544,11 +527,9 @@ package body Display.Pages.Route_Edition is
 
       Btn_View_West.Set_Allocation (Allocation);
 
-      Btn_View_West.Set_Label ("<");
+      Btn_View_West.Set_Symbol (Glex.Symbols.Triangle_Left);
 
       Btn_View_West.Set_Style (Button_Action);
-
-      Btn_View_West.Set_Font_Size (0.5, 0.5);
 
       -- Zoom out button
       ------------------------------------------------------
@@ -564,7 +545,7 @@ package body Display.Pages.Route_Edition is
 
       Btn_Zoom_Out.Set_Label_Color (Color_White);
 
-      Btn_Zoom_Out.Set_Font_Size (0.6);
+      Btn_Zoom_Out.Set_Font_Size (0.5, 0.5);
 
       -- Zoom in button
       ------------------------------------------------------
@@ -577,7 +558,7 @@ package body Display.Pages.Route_Edition is
 
       Btn_Zoom_In.Set_Label_Color (Color_White);
 
-      Btn_Zoom_In.Set_Font_Size (0.5);
+      Btn_Zoom_In.Set_Font_Size (0.5, 0.5);
 
       -- Center on home (first waypoint)
       ------------------------------------------------------
@@ -622,6 +603,20 @@ package body Display.Pages.Route_Edition is
       Btn_Center_Aircraft.Set_Label_Color (Color_White);
 
       Btn_Center_Aircraft.Set_Font_Size (0.4, 0.5);
+
+      --####################################################
+      --## Waypoint and route info functions
+      --####################################################
+
+      Allocation.X := 0.005;
+      Allocation.W := Pnl_Left.Get_Allocation.W - 0.01;
+      Allocation.Y := Btn_View_North.Get_Allocation.Y + Btn_View_North.Get_Allocation.H + 0.01;
+      Allocation.H := 1.0 - Allocation.Y - 0.14;
+
+      Pnl_Waypoint.Set_Allocation (Allocation);
+      Pnl_Waypoint.Set_Label ("WPT");
+      Pnl_Waypoint.Set_Font_Size (0.03, 0.25);
+      Pnl_Waypoint.Set_Show_Border (False);
 
    end Initialize;
    -----------------------------------------------------------------------------
@@ -726,20 +721,22 @@ package body Display.Pages.Route_Edition is
 
          Btn_Center_Aircraft.Draw;
 
+         Pnl_Waypoint.Draw;
+
          Draw (Maps.Lat_Image (Flight.Plan.Next_Waypoint.Position),
-               0.01, 0.80, Font_1, Line_Magenta, Alignment_LL);
+               0.02, 0.76, Font_1, Line_Magenta, Alignment_LL);
 
          Draw (Maps.Lon_Image (Flight.Plan.Next_Waypoint.Position),
-               0.01, 0.72, Font_1, Line_Magenta, Alignment_LL);
+               0.02, 0.68, Font_1, Line_Magenta, Alignment_LL);
 
          Draw ("}" & Utility.Strings.Float_Image (Flight.Plan.Next_Waypoint.Elevation, 0) & "M",
-               0.01, 0.64, Font_1, Line_Yellow, Alignment_LL);
+               0.02, 0.60, Font_1, Line_Yellow, Alignment_LL);
 
          Draw ("-D> " & Flight.Plan.Flight_Plan.Get_Length,
-               0.01, 0.56, Font_1, Line_White, Alignment_LL);
+               0.02, 0.52, Font_1, Line_White, Alignment_LL);
 
          Draw ("-R> " & Flight.Plan.Flight_Plan.Get_Radius,
-               0.01, 0.48, Font_1, Line_White, Alignment_LL);
+               0.02, 0.44, Font_1, Line_White, Alignment_LL);
 
       end if;
 

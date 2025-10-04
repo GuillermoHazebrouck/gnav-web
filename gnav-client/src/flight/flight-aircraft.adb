@@ -218,6 +218,30 @@ package body Flight.Aircraft is
    
    
    --===========================================================================
+   --  (See specification file)
+   --===========================================================================
+   function Get_Vertical_Speed (Airspeed : Float) return Float is
+   begin
+      
+      for S of Gliding_States loop
+         
+         if S.V > Airspeed then
+            
+            return S.Vv;
+            
+         end if;
+         
+      end loop;
+      
+      return 0.0;
+      
+   end Get_Vertical_Speed;
+   -----------------------------------------------------------------------------
+   
+   
+   
+   
+   --===========================================================================
    -- Recualculates the recomended landing speed
    --===========================================================================
    procedure Recalculate_Reference_Speed is

@@ -29,7 +29,7 @@ package Layers.Airspaces is
    --===========================================================================
    -- Loads the airspaces from an OpenAir file
    --===========================================================================
-   procedure Parse_Open_Air_File;
+   procedure Load_Open_Air_Files;
 
    --===========================================================================
    -- Generates the native G-NAV file

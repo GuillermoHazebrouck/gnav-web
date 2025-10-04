@@ -255,59 +255,6 @@ package body Traffic.Ogn is
 
 
    --===========================================================================
-   -- Transforms the 8 hexa characters into a 4 bytes decimal
-   --===========================================================================
-   function Parse_Hex_Id (Value : String) return Natural is
-
-      B : Natural := 0;
-      E : Natural := 1;
-      R : Natural := 0;
-
-   begin
-
-      if Value'Length > 8 then
-         return 0;
-      end if;
-
-      for C of reverse Value loop
-
-         E := 16 ** B;
-
-         case C is
-            when '0' => null;
-            when '1' => R := R + 1  * E;
-            when '2' => R := R + 2  * E;
-            when '3' => R := R + 3  * E;
-            when '4' => R := R + 4  * E;
-            when '5' => R := R + 5  * E;
-            when '6' => R := R + 6  * E;
-            when '7' => R := R + 7  * E;
-            when '8' => R := R + 8  * E;
-            when '9' => R := R + 9  * E;
-            when 'A' => R := R + 10 * E;
-            when 'B' => R := R + 11 * E;
-            when 'C' => R := R + 12 * E;
-            when 'D' => R := R + 13 * E;
-            when 'E' => R := R + 14 * E;
-            when 'F' => R := R + 15 * E;
-            when others =>
-               -- Invalid
-               return 0;
-         end case;
-
-         B := B + 1;
-
-      end loop;
-
-      return R;
-
-   end Parse_Hex_Id;
-   -----------------------------------------------------------------------------
-
-
-
-
-   --===========================================================================
    -- Converts an OGN message into a compact G-NAV binary representation
    --===========================================================================
    procedure Parse_Ogn_Message (Message : String) is
@@ -335,7 +282,7 @@ package body Traffic.Ogn is
                -- This is a beacon
                -----------------------------------------------------------------
                declare
-                  Track : Track_Record;
+                  Track : Track_Record := No_Track;
                   T     : Integer;
                   P     : Position_Record;
                   S,
@@ -349,6 +296,8 @@ package body Traffic.Ogn is
                   --------------------------------------------------------------
 
                   Track.Timestamp := Clock;
+
+                  Track.Source    := Source_Ogn;
 
                   -- Aircraft type
                   --------------------------------------------------------------
@@ -364,7 +313,7 @@ package body Traffic.Ogn is
 
                   -- Only general aviation
                   --------------------------
-                  if K = "/^" then
+                  if K = "/^" and Small_Only then
                      return;
                   end if;
 
@@ -402,7 +351,7 @@ package body Traffic.Ogn is
                   Track.Position.Lat := Reference.Lat + P.Lat;
                   Track.Position.Lon := Reference.Lon + P.Lon;
 
-                  -- Course (1.5 deg)
+                  -- Course (LSB = 1.5 deg)
                   --------------------------------------------------------------
 
                   C := Get_Natural (Message (I + 28 .. I + 30));
@@ -426,12 +375,12 @@ package body Traffic.Ogn is
                      return;
                   end if;
 
-                  -- Altitude (m)
+                  -- Altitude (LSB = 1m)
                   --------------------------------------------------------------
 
                   A := Natural (Float (Get_Natural (Message (I + 38 .. I + 43))) * 0.3048);
 
-                  if A in 0..10_000 then
+                  if A in 0 .. Ogn_Ceiling then
                      Track.Altitude := Short_Natural (A);
                   else
                      -- Invalid altitude
@@ -448,7 +397,7 @@ package body Traffic.Ogn is
                        Message (J+1) = 'd'
                      then
 
-                        Track.Id := Parse_Hex_Id (Message (J+2..J+9));
+                        Track.Id := Utility.Parse_Hex_Id (Message (J+4..J+9));
 
                         exit;
 

@@ -16,7 +16,7 @@
 --  to http://www.gnu.org/licenses for a complete copy of the license.      --
 ------------------------------------------------------------------------------
 
-with "../aws_gnutls/aws_gnutls";
+with "../aws/aws_gnutls";
 
 project gnav_server is
 
@@ -28,6 +28,11 @@ project gnav_server is
       for Default_Switches ("Ada") use ("-lgnutls", "-lz");
    end Linker;
    
+   package Binder is
+      for Default_Switches ("Ada") use ("-static");
+      -- (this might not have effect)
+   end Binder;
+
    package Builder is
       for Default_Switches ("Ada") use ("-gnat12");
       for Executable ("gnav_server.adb") use "../../server/gnav_server";

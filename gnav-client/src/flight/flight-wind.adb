@@ -24,6 +24,7 @@
 with Maps;
 use  Maps;
 with Utility.Log;
+with Utility.Storage;
 with Utility.Strings;
 with Utility.Units;
 
@@ -33,70 +34,55 @@ with Utility.Units;
 --//////////////////////////////////////////////////////////////////////////////
 package body Flight.Wind is
 
+
    --===========================================================================
    -- (See specification file)
    --===========================================================================
-   procedure Set_Metar_Wind (Value : String; Time : Times) is
+   procedure Read_Wind is
 
-      use Utility.Strings;
-      use Utility.Units;
-
-      Wind_Course : Float   := 0.0;
-      Wind_Speed  : Float   := 0.0;
-      L           : Natural := Value'First;
-      Wind        : Vector2_Record;
+      Value  : String := Utility.Storage.Get_Item ("WIND");
 
    begin
 
-      -- Search for the first KT flag
-      ---------------------------------------
-      for I in Value'First..Value'Last-1 loop
+      if Value /= "" then
 
-         if Value (I) = 'K' and then Value (I+1) = 'T' then
+         declare
+            use Utility.Strings;
+            Reader : String_Buffer (Value'Length);
+         begin
 
-            if I - Value'First >= 6 then
+            Reader.Load (Value);
 
-               L := I;
+            Last_Manual_Wind.Set (Long_Float (Float_Value (Reader.Read_Next ('>'), 0.0)),
+                                  Long_Float (Float_Value (Reader.Read_Next ('>'), 0.0)));
 
-               exit;
+            Last_Metar_Wind.Set (Long_Float (Float_Value (Reader.Read_Next ('>'), 0.0)),
+                                 Long_Float (Float_Value (Reader.Read_Next ('>'), 0.0)));
 
-            end if;
-
-         end if;
-
-      end loop;
-
-      if L = Value'First then
-
-         -- No wind seems to be present in metar
-         ---------------------------------------
-         return;
+         end;
 
       end if;
 
-      -- NOTE: VRB falls in the default direction (north)
+   end Read_Wind;
+   -----------------------------------------------------------------------------
 
-      Wind_Course := 270.0 - Float_Value (Value (L-5..L-3), 0.0);
 
-      Wind_Speed  := Float_Value (Value (L-2..L-1), 0.0);
 
-      Wind.Set_From_Polar (Long_Float (Wind_Course / 180.0) * Math.Pi, Long_Float (Convert (Wind_Speed, Unit_Knot, Unit_Meter_Second)));
 
-      Last_Metar_Wind      := Wind;
+   --===========================================================================
+   -- (See specification file)
+   --===========================================================================
+   procedure Save_Wind is
 
-      Last_Metar_Wind_Time := Time;
+      use Utility.Strings;
 
-      if Source = Wind_Source_Metar then
+   begin
 
-         Data.Wind := Last_Metar_Wind;
+      Utility.Storage.Set_Item ("WIND",
+                                Float_Image (Float (Last_Manual_Wind.Get_X), 1) & ">" & Float_Image (Float (Last_Manual_Wind.Get_Y), 1) & ">" &
+                                Float_Image (Float (Last_Metar_Wind.Get_X),  1) & ">" & Float_Image (Float (Last_Metar_Wind.Get_Y),  1));
 
-         Data.Ages   (Field_Wind) := Last_Metar_Wind_Time;
-
-         Data.Origin (Field_Wind) := Update_External;
-
-      end if;
-
-   end Set_Metar_Wind;
+   end Save_Wind;
    -----------------------------------------------------------------------------
 
 
@@ -149,11 +135,9 @@ package body Flight.Wind is
    procedure Set_Manual_Wind (Wind : Vector2_Record) is
    begin
 
-      Last_Manual_Wind      := Wind;
+      Last_Manual_Wind := Wind;
 
       Last_Manual_Wind_Time := Cached_Time;
-
-      Utility.Log.Put_Message ("manual wind set to " & Wind.Image);
 
       if Source = Wind_Source_Manual then
 

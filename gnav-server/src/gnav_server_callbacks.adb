@@ -36,6 +36,8 @@ with Utility.Log;
 use  Utility.Log;
 with Meteo;
 with Traffic;
+with Users;
+use  Users;
 
 --xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 --
@@ -45,135 +47,37 @@ package body Gnav_Server_Callbacks is
    use Ada;
 
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   --
+   -- Server stats
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   type User_Record is limited record
+   protected body Server_Stats is
 
-      Id    : Utility.Ids.Id_Type;
+      function Get_Number_Of_Wasm_Requests return Natural is
+      begin
+         return Number_Of_Wasm_Requests;
+      end;
 
-      Time  : Ada.Calendar.Time;
+      function Get_Number_Of_Aprs_Requests return Natural is
+      begin
+         return Number_Of_Aprs_Requests;
+      end;
 
-      Count : Natural;
+      procedure Reset is
+      begin
+         Number_Of_Wasm_Requests := 0;
+         Number_Of_Aprs_Requests := 0;
+      end;
 
-   end record;
+      procedure Increase_Number_Of_Wasm_Requests is
+      begin
+         Number_Of_Wasm_Requests := Number_Of_Wasm_Requests + 1;
+      end;
 
-   Users : array (1..50) of User_Record := (others =>  (Id    => Utility.Ids.No_Id,
-                                                        Time  => Ada.Calendar.Clock - 4000.0,
-                                                        Count => 0));
+      procedure Increase_Number_Of_Aprs_Requests is
+      begin
+         Number_Of_Aprs_Requests := Number_Of_Aprs_Requests + 1;
+      end;
 
-   --===========================================================================
-   -- TODO: open file only once
-   --===========================================================================
-   procedure Log_User_Data (Id : Utility.Ids.Id_Type; Track_Data : String) is
-   begin
-
-      -- Log the track data (this is optional for the client)
-      --------------------------------------------------------------------------
-      if Track_Data'Length > 0 and then Track_Data (Track_Data'First) = 'B' then
-
-         declare
-            use Ada.Text_IO;
-            use Ada.Calendar;
-            Today    : String := Ada.Calendar.Formatting.Image (Clock);
-            Hour     : String := Today (12..Today'Last);
-            Log_Path : String := "files/users/" & Id;
-            Log_Name : String := Log_Path & "/" & Today (1..10) & ".igc";
-            File_Id  : File_Type;
-         begin
-
-            if not Ada.Directories.Exists (Log_Path) then
-               Ada.Directories.Create_Directory (Log_Path);
-            end if;
-
-            if not Ada.Directories.Exists (Log_Name) then
-
-               Create (File_Id, Out_File, Log_Name);
-
-               -- Write the IGC header
-               --------------------------------------------------------
-               Put_Line (File_Id, "AGNVV2A");
-               Put_Line (File_Id, "HFDTE" & Today (3..4) & Today (6..7) & Today (9..10)); -- YYMMDD
-               Put_Line (File_Id, "HFDTM100GPSDATUM:WGS-1984");
-               Put_Line (File_Id, "HFFTYFRTYPE:G-NAV");
-               Put_Line (File_Id, "I023638GSP3941HDT"); -- TODO: change HDT
-
-            else
-               Open (File_Id, Append_File, Log_Name);
-
-            end if;
-
-            -- Write the data in IGC format
-            ------------------------------------------------------------
-            Put_Line (File_Id, Track_Data);
-
-            Close (File_Id);
-
-         end;
-
-      end if;
-
-   end Log_User_Data;
-   -----------------------------------------------------------------------------
-
-
-
-
-   --===========================================================================
-   -- Adds the user to the list and removes old users
-   --===========================================================================
-   procedure Log_User (Id : Utility.Ids.Id_Type; Track_Data : String) is
-   begin
-
-      Log_User_Data (Id, Track_Data);
-
-      -- Update as existing user
-      ------------------------------------------------
-      for User of Users loop
-
-         if User.Id = Id then
-            User.Time  := Clock;
-            User.Count := User.Count + 1;
-            return;
-         end if;
-
-      end loop;
-
-      -- Remove old users (inactive for 10 minutes)
-      ------------------------------------------------
-      for User of Users loop
-
-         if User.Id /= Utility.Ids.No_Id and then Clock - User.Time > 600.0 then
-
-            Log_Trace ("user " & User.Id & " lost contact at " & Ada.Calendar.Formatting.Image (User.Time) & " C=" & Natural'Image (User.Count));
-
-            User.Id    := Utility.Ids.No_Id;
-            User.Count := 0;
-
-         end if;
-
-      end loop;
-
-      -- Add on a vacant place
-      ------------------------------------------------
-      for User of Users loop
-
-         if User.Id = Utility.Ids.No_Id then
-
-            User.Id    := Id;
-            User.Time  := Clock;
-            User.Count := 0;
-
-            Log_Trace ("user " & User.Id & " logged");
-
-            return;
-
-         end if;
-
-      end loop;
-
-      Log_Trace ("user " & Id & " not registered, stack full");
-
-   end Log_User;
+   end Server_Stats;
    -----------------------------------------------------------------------------
 
 
@@ -196,8 +100,6 @@ package body Gnav_Server_Callbacks is
 
          Answer := Response.File (Content_Type => "text/html",
                                   Filename     => "files/index.html");
-
-         Log_Trace ("resources requested");
 
       --------------------------------------------------------------------------
       -- Icons
@@ -235,6 +137,8 @@ package body Gnav_Server_Callbacks is
          Answer := Response.File (Content_Type => "application/wasm",
                                   Filename     => "files/main.wasm");
 
+         Server_Stats.Increase_Number_Of_Wasm_Requests;
+
       --------------------------------------------------------------------------
       -- Ada webpack tools
       --------------------------------------------------------------------------
@@ -258,6 +162,34 @@ package body Gnav_Server_Callbacks is
 
          Answer := Response.File (Content_Type => "text/javascript",
                                   Filename     => "files/gnav_sw.js");
+
+      --------------------------------------------------------------------------
+      -- Sounds
+      --------------------------------------------------------------------------
+      elsif Content = "/bweep.wav" then
+
+         Answer := Response.File (Content_Type => "application/octet-stream",
+                                  Filename     => "files/sounds/bweep.wav");
+
+      elsif Content = "/alert.wav" then
+
+         Answer := Response.File (Content_Type => "application/octet-stream",
+                                  Filename     => "files/sounds/alert.wav");
+
+      elsif Content = "/atent.wav" then
+
+         Answer := Response.File (Content_Type => "application/octet-stream",
+                                  Filename     => "files/sounds/atent.wav");
+
+      elsif Content = "/score.wav" then
+
+         Answer := Response.File (Content_Type => "application/octet-stream",
+                                  Filename     => "files/sounds/score.wav");
+
+      elsif Content = "/messg.wav" then
+
+         Answer := Response.File (Content_Type => "application/octet-stream",
+                                  Filename     => "files/sounds/messg.wav");
 
       --------------------------------------------------------------------------
       -- Maps
@@ -303,15 +235,6 @@ package body Gnav_Server_Callbacks is
                                   Filename     => "files/data/reference.bin");
 
       --------------------------------------------------------------------------
-      -- List of useful radio frequencies
-      --------------------------------------------------------------------------
-
-      elsif Content = "/radio.bin" then
-
-         Answer := Response.File (Content_Type => "application/octet-stream",
-                                  Filename     => "files/data/radio.bin");
-
-      --------------------------------------------------------------------------
       -- Aircraft list
       --------------------------------------------------------------------------
 
@@ -336,31 +259,47 @@ package body Gnav_Server_Callbacks is
 
          declare
             use Utility.Ids;
-            User_Id    : Id_Type := No_Id;
-            Track_Data : String  := Aws.Headers.Get_Values (Aws.Status.Header (Request), "APRS");
+            User       : User_Record;
+            Track_Data : String := Aws.Headers.Get_Values (Aws.Status.Header (Request), "APRS");
          begin
 
-            Utility.Override (User_Id, Aws.Headers.Get_Values (Aws.Status.Header (Request), "SQUAWK"));
+            Utility.Override (User.Id,   Aws.Headers.Get_Values (Aws.Status.Header (Request), "CODE"));
 
-            -- "Zulu" requests are treated as new users, we need a new Id.
-            --------------------------------------------------------------------
-            if User_Id = Zz_Id then
+            Utility.Override (User.Mark, Aws.Headers.Get_Values (Aws.Status.Header (Request), "MARK"));
 
-               User_Id := Get_New_Id;
+            User.Load_Data (Track_Data);
 
-               Answer := Response.Build (Content_Type => "application/octet-stream",
-                                         Message_Body => Traffic.Get_Stack.Get_Tracks (User_Id, Track_Data, Send_Id => True));
+            if User.Valid_Position then
 
-            -- When there is a valid Id, it means the request is legitimate
-            --------------------------------------------------------------------
-            elsif User_Id /= No_Id then
+               -- "Zulu" requests are treated as new users, we need a new Id.
+               --------------------------------------------------------------------
+               if User.Id = Zz_Id then
 
-               -- Respond without the Id as it is already known
-               -----------------------------------------------------------------
-               Answer := Response.Build (Content_Type => "application/octet-stream",
-                                         Message_Body => Traffic.Get_Stack.Get_Tracks (User_Id, Track_Data, Send_Id => False));
+                  User.Id := Get_New_Id;
 
-               Log_User (User_Id, Track_Data);
+                  Answer := Response.Build (Content_Type => "application/octet-stream",
+                                            Message_Body => Traffic.Get_Stack.Get_Tracks (User, Send_Id => True));
+
+                  Server_Stats.Increase_Number_Of_Aprs_Requests;
+
+               -- When there is a valid Id, it means the request is legitimate
+               --------------------------------------------------------------------
+               elsif User.Id /= No_Id then
+
+                  -- Respond without the Id as it is already known
+                  --------------------------------------------------------------------
+                  Answer := Response.Build (Content_Type => "application/octet-stream",
+                                            Message_Body => Traffic.Get_Stack.Get_Tracks (User, Send_Id => False));
+
+                  -- Incoporate the user to the list of active users and tracks
+                  --------------------------------------------------------------------
+                  Users_Stack.Process_User (User, Track_Data);
+
+                  Traffic.Get_Stack.Link_User (User);
+
+                  Server_Stats.Increase_Number_Of_Aprs_Requests;
+
+               end if;
 
             end if;
 

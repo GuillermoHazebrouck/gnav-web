@@ -326,6 +326,11 @@ package Flight.Aircraft is
    function Get_Sink return Float;
       
    --===========================================================================
+   -- Returns the expected vertical speed when flying at the given airspeed
+   --===========================================================================
+   function Get_Vertical_Speed (Airspeed : Float) return Float;
+      
+   --===========================================================================
    -- Returns the maximum altitude when getting to a given point in a straight
    -- line and turning back to the given reference point.
    -- NOTE: No_Altitude is returned when the home point is unreachable

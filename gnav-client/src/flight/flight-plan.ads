@@ -56,6 +56,11 @@ package Flight.Plan is
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    --
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   type Waypoint_Kinds is (Waypoint_Cylinder, Waypoint_Arc);
+
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   --
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    subtype Waypoint_Names is String (1..4);
 
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -82,6 +87,10 @@ package Flight.Plan is
       Airspeed     : Float;
 
       Visited      : Boolean;
+
+      Kind         : Waypoint_Kinds;
+
+      Radius       : Float;
 
       In_Range     : Range_Kinds;
 
@@ -151,6 +160,8 @@ package Flight.Plan is
                                                      Required     => No_Altitude,
                                                      Airspeed     => 0.0,
                                                      Visited      => False,
+                                                     Kind         => Waypoint_Cylinder,
+                                                     Radius       => 1.0,
                                                      In_Range     => Range_Unreachable,
                                                      In_Proximity => False,
                                                      Is_Active    => False,

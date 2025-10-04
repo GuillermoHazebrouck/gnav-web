@@ -52,28 +52,25 @@ package body Maps is
 
 
    --===========================================================================
-   --
+   -- DDDMMmmm<E/W>
    --===========================================================================
    function Compact_Lon_String (Value : Long_Float) return String is
 
       Degrees : Long_Float := Long_Float'Floor (abs Value);
       Minutes : Long_Float := 60.0 * (abs Value - Degrees);
-      Seconds : Long_Float := 60.0 * (Minutes - Long_Float'Floor (Minutes));
 
       D : String := "000";
-      M : String := "00";
-      S : String := "00.0";
+      M : String := "00.000";
 
    begin
 
       Override (D, Integer_Image (Integer (Long_Float'Floor      (Degrees))), '0', True);
-      Override (M, Integer_Image (Integer (Long_Float'Truncation (Minutes))), '0', True);
-      Override (S, Float_Image   (Float   (Seconds), 1), '0', True);
+      Override (M, Float_Image   (Float   (Minutes), 3), '0', True);
 
       if Value < 0.0 then
-         return D & M & S (1..2) & S (4) & 'W';
+         return D & M (1..2) & M (4..6) & 'W';
       else
-         return D & M & S (1..2) & S (4) & 'E';
+         return D & M (1..2) & M (4..6) & 'E';
       end if;
 
    end Compact_Lon_String;
@@ -82,28 +79,25 @@ package body Maps is
 
 
    --===========================================================================
-   --
+   -- DDMMmmm<N/S>
    --===========================================================================
    function Compact_Lat_String (Value : Long_Float) return String is
 
       Degrees : Long_Float := Long_Float'Floor (abs Value);
       Minutes : Long_Float := 60.0 * (abs Value - Degrees);
-      Seconds : Long_Float := 60.0 * (Minutes - Long_Float'Floor (Minutes));
 
       D : String := "00";
-      M : String := "00";
-      S : String := "00.0";
+      M : String := "00.000";
 
    begin
 
-      Override (D, Integer_Image (Integer (Long_Float'Floor      (Degrees))), '0', True);
-      Override (M, Integer_Image (Integer (Long_Float'Truncation (Minutes))), '0', True);
-      Override (S, Float_Image   (Float   (Seconds), 1), '0', True);
+      Override (D, Integer_Image (Integer (Long_Float'Floor (Degrees))), '0', True);
+      Override (M, Float_Image   (Float   (Minutes), 3), '0', True);
 
       if Value < 0.0 then
-         return D & M & S (1..2) & S (4) & 'S';
+         return D & M (1..2) & M (4..6) & 'S';
       else
-         return D & M & S (1..2) & S (4) & 'N';
+         return D & M (1..2) & M (4..6) & 'N';
       end if;
 
    end Compact_Lat_String;
@@ -886,14 +880,13 @@ package body Maps is
       6 => (Level => 1.0, Color => (0.10,0.20,0.20,1.0)));
 
    -- G-NAV colorset
-   Color_Stages_2 : constant Color_Stage_Array (1..7) :=
-     (1 => (Level => 0.0/6.0, Color => (178.0/255.0, 229.0/255.0, 153.0/255.0, 1.0)),
-      2 => (Level => 1.0/6.0, Color => (229.0/255.0, 255.0/255.0, 204.0/255.0, 1.0)),
-      3 => (Level => 2.0/6.0, Color => (201.0/255.0, 224.0/255.0, 143.0/255.0, 1.0)),
+   Color_Stages_2 : constant Color_Stage_Array (1..6) :=
+     (1 => (Level => 0.0/6.0, Color => (229.0/255.0, 255.0/255.0, 204.0/255.0, 1.0)),
+      2 => (Level => 1.0/6.0, Color => (130.0/255.0, 245.0/255.0, 120.0/255.0, 1.0)),
+      3 => (Level => 2.0/6.0, Color => (122.0/255.0, 235.0/255.0, 113.0/255.0, 1.0)),
       4 => (Level => 3.0/6.0, Color => (187.0/255.0, 193.0/255.0,  93.0/255.0, 1.0)),
-      5 => (Level => 4.0/6.0, Color => (0.90,0.80,0.55,1.0)),
-      6 => (Level => 5.0/6.0, Color => (132.0/255.0,  91.0/255.0,  21.0/255.0, 1.0)),
-      7 => (Level => 6.0/6.0, Color => (109.0/255.0,  58.0/255.0,  38.0/255.0, 1.0)));
+      5 => (Level => 4.0/6.0, Color => (229.0/255.0, 204.0/255.0, 140.0/255.0, 1.0)),
+      6 => (Level => 6.0/6.0, Color => (152.0/255.0, 111.0/255.0,  41.0/255.0, 1.0)));
 
    -- Matlab colorset
    Color_Stages_3 : constant Color_Stage_Array (1..12) :=

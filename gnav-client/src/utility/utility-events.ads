@@ -34,7 +34,7 @@ package Utility.Events is
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    --
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   type Event_Stack is tagged private;
+   type Event_Stack (Size : Positive) is tagged private;
 
    --===========================================================================
    -- Connects a callback to the event
@@ -51,14 +51,14 @@ private
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    --
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   type Event_Array is array (1..10) of access procedure;
+   type Event_Array is array (Positive range <>) of access procedure;
 
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    --
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   type Event_Stack is tagged record
+   type Event_Stack (Size : Positive) is tagged record
 
-      Callbacks : Event_Array;
+      Callbacks : Event_Array (1..Size);
 
    end record;
 

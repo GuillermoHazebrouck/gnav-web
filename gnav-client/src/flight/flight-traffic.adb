@@ -201,9 +201,9 @@ package body Flight.Traffic is
             T        : Natural;
             R        : Position_Record;
             N        : Natural;
-            Id       : Natural;
             Lat      : Float;
             Lon      : Float;
+            Flags    : Short_Short_Natural;
             Age      : Short_Short_Integer;
             Altitude : Short_Natural;
             Speed    : Short_Short_Natural;
@@ -211,6 +211,8 @@ package body Flight.Traffic is
             Vario    : Short_Short_Integer;
             Rotation : Short_Short_Integer;
             Last     : Short_Short_Integer := Short_Short_Integer'First;
+            Tailmark : String (1..2);
+            Pilot    : String (1..2);
          begin
 
             T     := S.Read_Natural;
@@ -221,10 +223,11 @@ package body Flight.Traffic is
             if N > Traffic_Data'Last then
                N := Traffic_Data'Last;
             end if;
+            Number_Of_Tracks := N;
 
             for I in 1..N loop
 
-               Id       := S.Read_Natural;
+               Flags    := S.Read_Short_Short_Natural;
                Age      := S.Read_Short_Short_Integer;
                Lat      := S.Read_Float;
                Lon      := S.Read_Float;
@@ -233,12 +236,14 @@ package body Flight.Traffic is
                Course   := S.Read_Short_Short_Natural;
                Vario    := S.Read_Short_Short_Integer;
                Rotation := S.Read_Short_Short_Integer;
+               Tailmark := S.Read_String (2);
+               Pilot    := S.Read_String (2);
 
                Traffic_Data (I).Time_Stamp := Cached_Time;
                Set_Clock (Traffic_Data (I).Time_Stamp, Day_Lapse (T + Integer (Age)));
                Traffic_Data (I).Last_Integral := Traffic_Data (I).Time_Stamp;
 
-               Traffic_Data (I).Id           := Id;
+               Traffic_Data (I).Id           := 1;
                Traffic_Data (I).Position.Lat := R.Lat + Long_Float (Lat);
                Traffic_Data (I).Position.Lon := R.Lon + Long_Float (Lon);
                Traffic_Data (I).Altitude     := Natural (Altitude);
@@ -248,6 +253,8 @@ package body Flight.Traffic is
                Traffic_Data (I).Rotation     := Float (Rotation);       -- deg/s
                Traffic_Data (I).Active       := True;
                Traffic_Data (I).Coasted      := False;
+               Traffic_Data (I).Tailmark     := Tailmark;
+               Traffic_Data (I).Pilot        := Pilot;
 
                -- Keep the most recent time stap to check the system status
                -----------------------------------------------------------------
@@ -292,6 +299,9 @@ package body Flight.Traffic is
 
          Last_Update := Cached_Time;
 
+      else
+         Number_Of_Tracks := 0;
+
       end if;
 
    end Process_Traffic_Request;
@@ -331,16 +341,22 @@ package body Flight.Traffic is
             --------------------------------------------------------------------
             if Gnav_Info.User_Id /= Gnav_Info.No_Id then
 
-               Request.Set_Request_Header (To_Web_String ("SQUAWK"),
+               Request.Set_Request_Header (To_Web_String ("CODE"),
                                            To_Web_String (To_Wide_Wide_String (Gnav_Info.User_Id)));
 
             else
 
-               Request.Set_Request_Header (To_Web_String ("SQUAWK"),
+               Request.Set_Request_Header (To_Web_String ("CODE"),
                                            To_Web_String (To_Wide_Wide_String (Gnav_Info.Zz_Id)));
 
             end if;
 
+            if Gnav_Info.User_Tm /= Gnav_Info.No_Tm then
+
+               Request.Set_Request_Header (To_Web_String ("MARK"),
+                                           To_Web_String (To_Wide_Wide_String (Gnav_Info.User_Tm)));
+
+            end if;
             --------------------------------------------------------------------
 
             Request.Send (Web.Strings.Empty_Web_String);

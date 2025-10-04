@@ -498,9 +498,8 @@ package body Maps.Airspaces.Viewer is
 
       use Glex.Fonts;
 
-      I      : Natural;
-      Ax, Ay : Float;
-      X,  Y  : Float;
+      I    : Natural;
+      X, Y : Float;
 
       Matrix : Glex.Transform_Record;
       Sector : Color_Record;
@@ -671,6 +670,42 @@ package body Maps.Airspaces.Viewer is
          end;
 
       end loop;
+
+      if This.Count > 1 and Blink then
+
+         -- Right arrow
+         --------------------------------------------------------------------
+         if This.Page < This.Count then
+
+            X := This.Panel.Get_Allocation.X + This.Panel.Get_Allocation.W;
+            Y := This.Panel.Get_Allocation.Y + This.Panel.Get_Allocation.H * 0.5;
+
+            Glex.Symbols.Draw (Glex.Symbols.Triangle_Right,
+                               X         => X,
+                               Y         => Y,
+                               Size      => 0.018,
+                               Color     => Color_Gray_3,
+                               Alignment => Alignment_CC);
+
+         end if;
+
+         -- Left arrow
+         --------------------------------------------------------------------
+         if This.Page > 1 then
+
+            X := This.Panel.Get_Allocation.X;
+            Y := This.Panel.Get_Allocation.Y + This.Panel.Get_Allocation.H * 0.5;
+
+            Glex.Symbols.Draw (Glex.Symbols.Triangle_Left,
+                               X         => X,
+                               Y         => Y,
+                               Size      => 0.018,
+                               Color     => Color_Gray_3,
+                               Alignment => Alignment_CC);
+
+         end if;
+
+      end if;
 
       Glex.Get_Transform.Load_Unit;
 

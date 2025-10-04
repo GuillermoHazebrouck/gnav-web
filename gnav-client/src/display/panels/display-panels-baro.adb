@@ -25,6 +25,7 @@ with Flight.Aircraft;
 with Glex.Colors;
 use  Glex.Colors;
 with Glex.Fonts;
+with Glex.Symbols;
 with Widgets.Button;
 use  Widgets.Button;
 with Widgets.Panel;
@@ -177,11 +178,9 @@ package body Display.Panels.Baro is
 
       -- Decrease QNH button
 
-      Btn_Qnh_Min.Set_Label ("-");
+      Btn_Qnh_Min.Set_Symbol (Glex.Symbols.Triangle_Down);
 
       Btn_Qnh_Min.Set_Style (Button_Action);
-
-      Btn_Qnh_Min.Set_Font_Size (0.7, 0.5);
 
       Allocation.X := X + 0.01;
       Allocation.Y := Allocation.Y + Allocation.H - 0.15;
@@ -192,11 +191,9 @@ package body Display.Panels.Baro is
 
       -- Increase QNH button
 
-      Btn_Qnh_Plus.Set_Label ("+");
+      Btn_Qnh_Plus.Set_Symbol (Glex.Symbols.Triangle_Up);
 
       Btn_Qnh_Plus.Set_Style (Button_Action);
-
-      Btn_Qnh_Plus.Set_Font_Size (0.7, 0.5);
 
       Allocation.X := X + W - 0.07;
 

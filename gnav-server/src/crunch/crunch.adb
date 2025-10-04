@@ -29,9 +29,9 @@ with References;
 with Layers;
 with Layers.Airspaces;
 with Aircraft;
-with Traffic;
 with Utility;
 use  Utility;
+with Utility.Log;
 with Utility.Maps;
 
 --//////////////////////////////////////////////////////////////////////////////
@@ -40,6 +40,8 @@ with Utility.Maps;
 --//////////////////////////////////////////////////////////////////////////////
 procedure Crunch is
 begin
+
+   Utility.Log.Log_On_Files := False;
 
    Ada.Text_IO.Put_Line ("---------------------------------");
    Ada.Text_IO.Put_Line ("-- G-NAV PROJECT DATA COMPILER --");
@@ -53,7 +55,6 @@ begin
       Ada.Text_IO.Put_Line ("REFERENCES");
       Ada.Text_IO.Put_Line ("LAYERS");
       Ada.Text_IO.Put_Line ("AIRCRAFT");
-      Ada.Text_IO.Put_Line ("TRAFFIC");
 
       return;
 
@@ -98,7 +99,7 @@ begin
 
                Ada.Text_IO.Put_Line ("processing airspaces");
 
-               Layers.Airspaces.Parse_Open_Air_File;
+               Layers.Airspaces.Load_Open_Air_Files;
 
                Layers.Airspaces.Compile_Data;
 

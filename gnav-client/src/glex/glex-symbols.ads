@@ -50,7 +50,14 @@ package Glex.Symbols is
                          Triangle_Right,
                          Triangle_Left,
                          Square,
-                         Diamond);
+                         Diamond,
+                         None);
+
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   --
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   type Sizing_Kinds is (Size_Width,
+                         Size_Height);
 
    --===========================================================================
    -- Draws the given symbol
@@ -60,7 +67,8 @@ package Glex.Symbols is
                    X, Y      : Float;
                    Size      : Float;
                    Color     : Color_Record;
-                   Alignment : Font_Alignment_Types := Alignment_CC);
+                   Alignment : Font_Alignment_Types := Alignment_CC;
+                   Sizing    : Sizing_Kinds := Size_Width);
 
 end Glex.Symbols;
 --------------------------------------------------------------------------------

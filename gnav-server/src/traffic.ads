@@ -26,6 +26,8 @@ use  Ada.Calendar;
 with Ada.Streams;
 use  Ada.Streams;
 -- Gnav
+with Users;
+use  Users;
 with Utility.Maps;
 use  Utility.Maps;
 with Utility.Ids;
@@ -48,8 +50,13 @@ package Traffic is
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    type Track_Record is tagged private;
    
-   No_Track : constant Track_Record;
+   --===========================================================================
+   -- Returns an IGC image of the data
+   --===========================================================================
+   function Get_Igc_Image (This : Track_Record) return String;
    
+   No_Track : constant Track_Record;
+
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    --
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -69,23 +76,17 @@ package Traffic is
       -- Adds a track to the stack
       --========================================================================
       procedure Add_Track (New_Track : Track_Record);
-            
+      
       --========================================================================
-      -- Checks if the user can be matched to a track, or adds a new track
+      -- Incorporates the user to the tracks (fusion between the OGN and G-NAV)
       --========================================================================
-      procedure Add_User (User_Id  : Id_Type;
-                          Time     : Natural;
-                          Position : Position_Record; 
-                          Altitude : Float;
-                          Speed    : Float;
-                          Course   : Float);
+      procedure Link_User (User : User_Record);
       
       --========================================================================
       -- Returns a stream containing all tracks from the stack
       --========================================================================
-      function Get_Tracks (User_Id    : Id_Type; 
-                           Track_Data : String; 
-                           Send_Id    : Boolean := False) return Stream_Element_Array;
+      function Get_Tracks (User    : User_Record;
+                           Send_Id : Boolean := False) return Stream_Element_Array;
       
       --========================================================================
       -- Writes the tracks to a file
@@ -103,7 +104,7 @@ package Traffic is
       function Count_Tracks return Natural;
       
    private
-      
+        
       Tracks : Track_Array := (others => No_Track);
       
    end;
@@ -115,7 +116,39 @@ package Traffic is
    function Get_Stack return not null access Track_Stack;
    
 private
-
+   
+   --###########################################################################
+   -- Tracking of local FLARM devices
+   --###########################################################################
+                  
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   -- A local device to log
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   type Device_Record is record
+      
+      Id   : Natural;
+      
+      Name : Track_Names;
+      
+      Mark : Track_Marks;
+      
+   end record;
+   
+   No_Device : constant Device_Record := (Id   => 0,
+                                          Name => No_Callsign, 
+                                          Mark => No_Mark);
+   
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   -- This is filled at load time and remains invariant
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   Local_Devices : array (1..15) of aliased Device_Record := (others => No_Device);
+   
+   --###########################################################################
+   -- Stack
+   --###########################################################################
+             
+   type Track_Source_Kind is (Source_None, Source_Ogn, Source_Gnav);
+   
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    -- The track as represented in the binary file. The id is only for
    -- local use, so there are 14 bytes in total
@@ -124,28 +157,62 @@ private
    type Track_Record is tagged record
       
       -- Workspace variables (not encoded in the stream)
-      Timestamp : Time;
-      Time      : Natural;
-      Position  : Position_Record;
-      User      : Id_Type := No_Id;
+      Timestamp : Time;                 -- The reception time
+      Time      : Natural;              -- The age in seconds since 00:00:00 UTC
+      Position  : Position_Record;      -- The last position
+      User      : User_Record;          -- The coupled user data
+      Device    : access Device_Record; -- The reference to a local device
+      Checked   : Boolean;              -- Indicates if the device has been checked
+      Source    : Track_Source_Kind;    -- Indicates where the track comes from
+      Id        : Natural := 0;         -- The OGN (FLARM) identifier
       
       -- Message fields                 -- Bytes / Units / Accuracy
-      Id        : Natural := 0;         -- 4
+                                        -- 1       Bit flags
       Age       : Short_Short_Integer;  -- 1       [s]     1
-      Latitude  : Float;                -- 4       [deg]   ?
-      Longitude : Float;                -- 4       [deg]   ?
+      Latitude  : Float;                -- 4       [deg]   ? (relative to reference lat)
+      Longitude : Float;                -- 4       [deg]   ? (relative to reference lon)
       Altitude  : Short_Natural;        -- 2       [m]     1
       Vario     : Short_Short_Integer;  -- 1       [dm/s]  1
       Speed     : Short_Short_Natural;  -- 1       [km/h]  2
       Course    : Short_Short_Natural;  -- 1       [deg]   1.5
       Rotation  : Short_Short_Integer;  -- 1       [deg/s] 1
-      
+                                        -- 2       Device tailmark
+                                        -- 2       User defined mark
+ 
    end record;
+   
+   --===========================================================================
+   -- Updates the external fields
+   --===========================================================================
+   procedure Update_From (This : in out Track_Record; Other : Track_Record);
+   
+   --===========================================================================
+   -- Updates the external fields
+   --===========================================================================
+   procedure Update_From (This : in out Track_Record; User : User_Record);
+   
+   --===========================================================================
+   -- Returns 8-bits track flags based on the data
+   --===========================================================================
+   function Get_Bit_Flags (This : Track_Record) return Short_Short_Natural;
+   
+   --===========================================================================
+   -- Returns the track mark based on the linked data
+   --===========================================================================
+   function Get_Tailmark (This : Track_Record) return Track_Marks;
+   
+   --===========================================================================
+   -- Indicates if the user and the track are likely the same
+   --===========================================================================
+   function Merged_User (This : Track_Record; User : User_Record) return Boolean;
    
    No_Track : constant Track_Record := (Timestamp => Clock - 240.0,
                                         Time      => 0,
                                         Position  => No_Position_Record,
-                                        User      => No_Id,
+                                        User      => No_User,
+                                        Device    => null,
+                                        Checked   => False,
+                                        Source    => Source_None,
                                         Id        => 0,
                                         Age       => 0,
                                         Latitude  => 0.0,
@@ -156,28 +223,33 @@ private
                                         Course    => 0,
                                         Rotation  => 0);
    
-   
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    -- The stack of tracks
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    Stack : aliased Track_Stack;
-                
+                   
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    -- Other tracker variables
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  
-   Reference      : Position_Record := (50.7, 3.8);
+   Reference       : Position_Record := (50.7, 3.8);
    
-   Limits         : Position_Record := (1.0, 2.0);
+   Limits          : Position_Record := (1.0, 2.0);
    
-   Ogn_Range      : Long_Float      := 150.0;
+   Ogn_Range       : Long_Float      := 150.0;
    
-   Traffic_Range  : Float           := 40.0;
+   Ogn_Ceiling     : Natural         := 2500; -- [m]
    
-   Gliders_Only   : Boolean         := False;
+   Traffic_Range   : Float           := 40.0;
    
-   Ogn_Url        : String (1..100) := (others => ' ');
+   Gliders_Only    : Boolean         := False;
    
-   Ogn_Port       : Natural := 14580;
-   
+   Small_Only      : Boolean         := False;
+     
+   Ogn_Url         : String (1..100) := (others => ' ');
+    
+   Ogn_Port        : Natural := 14580;
+               
+   Log_Lattency    : Float := 2.0;
+
 end Traffic;
 --------------------------------------------------------------------------------

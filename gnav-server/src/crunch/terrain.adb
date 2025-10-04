@@ -31,6 +31,7 @@ with Ada.Numerics;
 with Ada.Numerics.Short_Elementary_Functions;
 with Ada.Numerics.Elementary_Functions;
 -- Local
+with Layers;
 with Utility;
 use  Utility;
 with Utility.Maps;
@@ -62,7 +63,7 @@ package body Terrain is
    -- Map grid data
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-   -- Lower left corner
+   -- South-West corner
    --------------------------------
    Reference : Position_Record := No_Position_Record;
 
@@ -88,11 +89,11 @@ package body Terrain is
 
    -- Number of rows (latitude)
    --------------------------------
-   M : Natural := 0;
+   N_Lat : Natural := 0;
 
    -- Number of columns (longitude)
    --------------------------------
-   N : Natural := 0;
+   N_Lon : Natural := 0;
 
    -- The map has been loaded
    --------------------------------
@@ -117,9 +118,9 @@ package body Terrain is
 
       Ada.Text_Io.Put_Line ("clearing the terrain grid");
 
-      N         := 0;
+      N_Lon     := 0;
 
-      M         := 0;
+      N_Lat     := 0;
 
       Cell_Size := 0.0;
 
@@ -190,8 +191,8 @@ package body Terrain is
          Loaded := False;
 
          Reference := No_Position_Record;
-         N         := 0;
-         M         := 0;
+         N_Lon     := 0;
+         N_Lat     := 0;
          Cell_Size := 0.0;
          No_Data   := 0.0;
 
@@ -218,17 +219,17 @@ package body Terrain is
 
                   if Key = "ncols" then
 
-                     N := Natural'Value (Value);
+                     N_Lon := Natural'Value (Value);
 
-                     Ada.Text_Io.Put_Line ("N    :" & Natural'Image (N));
+                     Ada.Text_Io.Put_Line ("N_Lon:" & Natural'Image (N_Lon));
 
                   elsif Key = "nrows" then
 
-                     M := Natural'Value (Value);
+                     N_Lat := Natural'Value (Value);
 
-                     Ada.Text_Io.Put_Line ("M    :" & Natural'Image (M));
+                     Ada.Text_Io.Put_Line ("N_Lat:" & Natural'Image (N_Lat));
 
-                     I := M - 1;
+                     I := N_Lat - 1;
 
                   elsif Key = "xllcorner" then
 
@@ -253,7 +254,7 @@ package body Terrain is
                -- Check if the buffer is sufficiently large
                -----------------------------------------------------------------
 
-               if N * M > Terrain'Length then
+               if N_Lon * N_Lat > Terrain'Length then
 
                   Ada.Text_Io.Put_Line (Terrain_Too_Large_Message);
 
@@ -269,7 +270,7 @@ package body Terrain is
 
                -- Read a full row
                --------------------------------------------------------------
-               for J in 1.. N loop
+               for J in 1.. N_Lon loop
 
                   loop
                      declare
@@ -298,7 +299,7 @@ package body Terrain is
 
                   -- Load a vertex
                   --------------------------------------------------------------
-                  Terrain (I * N + J) := Short_Float (Z);
+                  Terrain (I * N_Lon + J) := Short_Float (Z);
 
                end loop;
 
@@ -330,9 +331,9 @@ package body Terrain is
 
          -- Report limits, size and unknown points
          ----------------------------------------------
-         Middle.Lat := Reference.Lat + Long_Float (0.5 * Float (M) * Cell_Size);
+         Middle.Lat := Reference.Lat + Long_Float (0.5 * Float (N_Lat) * Cell_Size);
 
-         Middle.Lon := Reference.Lon + Long_Float (0.5 * Float (N) * Cell_Size);
+         Middle.Lon := Reference.Lon + Long_Float (0.5 * Float (N_Lon) * Cell_Size);
 
       else
 
@@ -374,7 +375,7 @@ package body Terrain is
 
    begin
 
-      if N * M <= Terrain'Length then
+      if N_Lon * N_Lat <= Terrain'Length then
 
          Ada.Text_Io.Put_Line ("saving terrain data in binary");
 
@@ -387,8 +388,8 @@ package body Terrain is
 
          Stream := Ada.Streams.Stream_IO.Stream (File_Id);
 
-         Natural'Write (Stream, N);
-         Natural'Write (Stream, M);
+         Natural'Write (Stream, N_Lon);
+         Natural'Write (Stream, N_Lat);
 
          Long_Float'Write (Stream, Reference.Lat);
          Long_Float'Write (Stream, Reference.Lon);
@@ -398,7 +399,7 @@ package body Terrain is
          Float'Write (Stream, Z_Min_Global);
          Float'Write (Stream, Z_Max_Global);
 
-         for I in 1 .. N * M loop
+         for I in 1 .. N_Lon * N_Lat loop
 
             Short_Float'Write (Stream, Terrain (I));
 
@@ -440,13 +441,13 @@ package body Terrain is
 
          Stream := Ada.Streams.Stream_IO.Stream (File_Id);
 
-         Natural'Read (Stream, N);
-         Natural'Read (Stream, M);
+         Natural'Read (Stream, N_Lon);
+         Natural'Read (Stream, N_Lat);
 
-         Ada.Text_Io.Put_Line ("N :" & Natural'Image (N));
-         Ada.Text_Io.Put_Line ("M :" & Natural'Image (M));
+         Ada.Text_Io.Put_Line ("N_Lon :" & Natural'Image (N_Lon));
+         Ada.Text_Io.Put_Line ("N_Lat :" & Natural'Image (N_Lat));
 
-         if N * M > Terrain'Length then
+         if N_Lon * N_Lat > Terrain'Length then
 
             Ada.Text_Io.Put_Line (Terrain_Too_Large_Message);
 
@@ -464,7 +465,7 @@ package body Terrain is
          Float'Read (Stream, Z_Min_Global);
          Float'Read (Stream, Z_Max_Global);
 
-         for I in 1 .. N * M loop
+         for I in 1 .. N_Lon * N_Lat loop
 
             Short_Float'Read (Stream, Terrain (I));
 
@@ -489,6 +490,82 @@ package body Terrain is
          end if;
 
    end Load_Binary;
+   -----------------------------------------------------------------------------
+
+
+
+
+   --===========================================================================
+   -- Loads the land polygons from local shape files and forces the land and
+   -- sea boundaries
+   --===========================================================================
+   procedure Mask_Land_And_Sea is
+
+      Point : Position_Record;
+      Size  : Long_Float := Long_Float (Cell_Size);
+
+      Step  : Natural := N_Lon * N_Lat / 20;
+      Count : Natural := 0;
+
+      Land  : Natural := 0;
+      Sea   : Natural := 0;
+      S     : Natural := Terrain'First;
+
+   begin
+
+      Ada.Text_Io.Put_Line ("masking land and sea areas");
+
+      Layers.Load_Shape_Files;
+
+      if not Layers.Is_Empty then
+
+         Ada.Text_Io.Put_Line ("processing data");
+         Ada.Text_Io.Put_Line ("|------------------|");
+
+         Point.Lat := Reference.Lat;
+
+         for I in 1 .. N_Lat loop
+
+            Point.Lon := Reference.Lon;
+
+            for J in 1 .. N_Lon loop
+
+               if Layers.Contains (Point) then
+                  if Terrain (S) < 1.0 then
+                     Terrain (S) := 1.0;
+                  end if;
+                  Land := Land + 1;
+               else
+                  Terrain (S) := 0.0;
+                  Sea := Sea + 1;
+               end if;
+
+               Point.Lon := Point.Lon + Size;
+
+               S := S + 1;
+
+               Count := Count + 1;
+               if Count > Step then
+                  Count := 0;
+                  Ada.Text_Io.Put (">");
+               end if;
+
+            end loop;
+
+            Point.Lat := Point.Lat + Size;
+
+         end loop;
+
+         Ada.Text_Io.Put_Line (">");
+         Ada.Text_Io.Put_Line ("land:" & Natural'Image (Land));
+         Ada.Text_Io.Put_Line ("sea :" & Natural'Image (Sea));
+
+      else
+         Ada.Text_Io.Put_Line ("no land data supplied");
+
+      end if;
+
+   end Mask_Land_And_Sea;
    -----------------------------------------------------------------------------
 
 
@@ -590,13 +667,13 @@ package body Terrain is
       end loop;
       --------------------------------------------------------------------------
 
-      Nx := N / Rx;
-      Ny := M / Ry;
+      Nx := N_Lon / Rx;
+      Ny := N_Lat / Ry;
       T  := Nx * Ny;
       D  := T / S + S;
 
-      Cx := (Cell_Size * Float (N)) / Float (Nx);
-      Cy := (Cell_Size * Float (M)) / Float (Ny);
+      Cx := (Cell_Size * Float (N_Lon)) / Float (Nx);
+      Cy := (Cell_Size * Float (N_Lat)) / Float (Ny);
 
       -- Note that by specification, the maximum number of nodes in the output
       -- is limited to 10 millon.
@@ -658,7 +735,7 @@ package body Terrain is
 
          for I in 1 .. Ny loop
 
-            K := (I - 1) * Ry * N;
+            K := (I - 1) * Ry * N_Lon;
 
             for J in 1 .. Nx loop
 
@@ -740,6 +817,8 @@ package body Terrain is
 
          Ada.Text_Io.Put_Line ("no terrain data available");
 
+         return;
+
       end if;
 
       Ada.Text_Io.Put_Line ("terrain grid loaded");
@@ -750,9 +829,11 @@ package body Terrain is
       Ada.Text_Io.Put_Line ("Zmin :" & Float'Image (Z_Min_Global));
       Ada.Text_Io.Put_Line ("Zmax :" & Float'Image (Z_Max_Global));
 
-      Ada.Text_Io.Put_Line ("Size :" & Natural'Image ((Short_Integer'Size * M * N) / 8_000_000) & "MB");
+      Ada.Text_Io.Put_Line ("Size :" & Natural'Image ((Short_Integer'Size * N_Lat * N_Lon) / 8_000_000) & "MB");
 
-      Ada.Text_Io.Put_Line ("terrain buffer usage: " & Natural'Image ((N * M * 100) / Terrain'Length) & "%");
+      Ada.Text_Io.Put_Line ("terrain buffer usage: " & Natural'Image ((N_Lon * N_Lat * 100) / Terrain'Length) & "%");
+
+      Mask_Land_And_Sea;
 
       Save_Binary_Parts;
 

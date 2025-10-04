@@ -32,11 +32,13 @@ with Flight.Plan;
 with Flight.Register;
 with Flight.Representation;
 with Flight.Traffic;
+with Flight.Simulation;
 with Glex;
 with Glex.Basic;
 with Glex.Colors;
 use  Glex.Colors;
 with Glex.Fonts;
+with Glex.Symbols;
 with Gnav_Info;
 with Math.Vector2;
 with Maps;
@@ -545,24 +547,24 @@ package body Display.Pages.Navigation is
       Allocation.Y := Pnl_Mc_Cready.Get_Allocation.Y + Pnl_Mc_Cready.Get_Allocation.H - Allocation.H - 0.08;
       Allocation.W :=(Pnl_Mc_Cready.Get_Allocation.W - 0.015) * 0.5;
       
-      Btn_Sink_Min.Set_Label ("{");
+      Btn_Sink_Min.Set_Symbol (Glex.Symbols.Triangle_Down);
+      
+      Btn_Sink_Min.Set_Font_Size (0.4);
       
       Btn_Sink_Min.Set_Allocation (Allocation);
       
-      Btn_Sink_Min.Set_Font_Size (0.4, 0.5);
-      
       Btn_Sink_Min.Set_Style (Button_Normal);
-                        
+      
       Allocation.X := Allocation.X + Allocation.W + 0.005;      
            
-      Btn_Sink_Plus.Set_Label ("}");
+      Btn_Sink_Plus.Set_Symbol (Glex.Symbols.Triangle_Up);
       
       Btn_Sink_Plus.Set_Allocation (Allocation);
       
       Btn_Sink_Plus.Set_Style (Button_Normal);
-                 
-      Btn_Sink_Plus.Set_Font_Size (0.4, 0.5);
-                    
+              
+      Btn_Sink_Plus.Set_Font_Size (0.4);
+         
       -- Wind speed and direction panel
       ------------------------------------------------------
       
@@ -657,6 +659,8 @@ package body Display.Pages.Navigation is
 
    begin
       
+      View.Cone_Margin := Flight.Safety_Height;
+      
       -- Map
       --------------------------------------------------------------------------
       
@@ -669,6 +673,13 @@ package body Display.Pages.Navigation is
       Maps.Reference.Draw (View);
       
       Maps.Airspaces.Monitor.Draw_Notifications;
+      
+      -- Simulation
+      --------------------------------------------------------------------------
+      
+      if Gnav_Info.Simulation_Mode then
+         Flight.Simulation.Draw_Clouds (View);
+      end if;
       
       -- Flight representation
       --------------------------------------------------------------------------
@@ -1165,6 +1176,12 @@ package body Display.Pages.Navigation is
             
          end if;
          
+         if Gnav_Info.Simulation_Mode and then X in 0.82..1.0 and then Y in 0.2..0.45 then
+            
+            Flight.Simulation.Selected_Turn_Rate := Float'Max (-17.0, Float'Min (17.0, Flight.Simulation.Selected_Turn_Rate - 15.0 * Dx));
+            
+         end if;
+         
       end if;
 
    end Screen_Move;
@@ -1183,6 +1200,6 @@ package body Display.Pages.Navigation is
       
    end Get_Map_View;
    -----------------------------------------------------------------------------
-   
+      
 end Display.Pages.Navigation;
 --------------------------------------------------------------------------------

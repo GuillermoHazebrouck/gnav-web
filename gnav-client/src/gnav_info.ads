@@ -30,19 +30,25 @@ package Gnav_Info is
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    -- G-NAV system data
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-   Core_Version       : String (1..2)  := "4A";
-   Service_Version    : String (1..4)  := (others => ' ');
+   Core_Version       : constant String (1..2)  := "5B";
+   Html_Version       : String (1..4)  := (others => ' ');
    Service_Name       : String (1..12) := (others => ' ');
    Startup_Time       : Times := No_Time;
    Home_Position      : Position_Record := No_Position_Record;
    Home_Name          : String (1..4)   := "HOME";
-   Utc_Offst          : Lapses  := No_Lapse;
    Request_Metar      : Boolean := True;
    Request_Traffic    : Boolean := True;
    Aprs_Airborne_Only : Boolean := False;
    --
    Simulation_Mode    : Boolean := False;
    Simulation_Reset   : Boolean := True;
+
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   -- TEST: lower the altitude to compensate for recurrent device bias
+   -- (a constant bias has been observed in many devices).
+   -- The app should be restarted when adapting the value.
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   Altitude_Bias : Float := 50.0;
 
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    --
@@ -55,6 +61,21 @@ package Gnav_Info is
    -- The identifier used to send position reporting back to the server
    --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    User_Id : Id_Type := Zz_Id;
+
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   -- Tail mark identifiers
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   subtype Tm_Type is String (1..2);
+
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   --
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   No_Tm: constant Tm_Type := (others => ' ');
+
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   -- The customized identification marks
+   --+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+   User_Tm : Tm_Type := "  ";
 
 end Gnav_Info;
 --------------------------------------------------------------------------------
