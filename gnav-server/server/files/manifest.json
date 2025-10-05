@@ -2,8 +2,8 @@
   "name": "G-NAV",
   "short-name": "G-NAV",
   "display": "standalone",
-  "scope": "https://ebgg.go-gliding.app/",
-  "start_url": "https://ebgg.go-gliding.app",
+  "scope": "https://your_url_here/",
+  "start_url": "https://your_url_here",
   "icons": [
     {
       "src": "/favicon.ico",
