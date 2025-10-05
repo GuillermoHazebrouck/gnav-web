@@ -1,14 +1,15 @@
-const cacheName = "4C4";
+// ** G-NAV service worker **
+// Do not forget increasing version and cleaning proxy cache
+// when adapting the resources!
+// NOTE: added favicon.ico due to exception Firefox
+//--------------------------------------------------------------
+const cacheName = "5B";
 const precachedResources = ["/",
+                            "/favicon.ico",
                             "/index.html",
                             "/main.wasm",
                             "/adawebpack.mjs",
                             "/manifest.json",
-                            "/bweep.wav",
-                            "/atent.wav",
-                            "/alert.wav",
-                            "/traffic.bin",
-                            "/metar.bin",
                             "/terrain_1.bin",
                             "/terrain_2.bin",
                             "/terrain_3.bin",
@@ -17,7 +18,12 @@ const precachedResources = ["/",
                             "/reference.bin",
                             "/layers.bin",
                             "/airspaces.bin",
-                            "/aircraft.bin"];
+                            "/aircraft.bin",
+                            "/bweep.wav",
+                            "/atent.wav",
+                            "/alert.wav",
+                            "/score.wav",
+                            "/messg.wav"];
 
 async function precache() {
   const cache = await caches.open(cacheName);

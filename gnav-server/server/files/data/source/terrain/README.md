@@ -1,1 +1,2 @@
 Use this folder to store the original terrain data. The raw data must be in the form of an ESRI grid file. You can use, for example, OpenTopography to obtains high resolution terrain data worldwide.
+You can also add a set of polygon type shape files containing the land areas to forcibely mask the land and sea. These files can be named as desired, as long as the extension is `shp`. The maskig operation can be very time-consuming, so make sure to check the outline resolution and lower it if necessary. Q-GIS is an excellent tool to do this.

@@ -40,9 +40,9 @@
 
     <!-- G-NAV SERVICE INFORMATION -->
     <script id="service-info" type="not-javascript">
-      VERSION=4E;
-      NAME=VZP-PHOENIX;
-      HOME=EBGG;
+      VERSION=5B;
+      NAME=G-NAV;
+      HOME=HOME;
       LOCATION=N50*45'14.3" E3*51'45.5";
       TRAFFIC=TRUE;
       METAR=TRUE;
@@ -87,6 +87,12 @@
         const audioAlertElement = new Audio("alert.wav");
         const audioAlertTrack   = audioContext.createMediaElementSource(audioAlertElement);
 
+        const audioScoreElement = new Audio("score.wav");
+        const audioScoreTrack   = audioContext.createMediaElementSource(audioScoreElement);
+
+        const audioMessgElement = new Audio("messg.wav");
+        const audioMessgTrack   = audioContext.createMediaElementSource(audioMessgElement);
+
         function playBweep()
         {
           audioBweepTrack.connect(audioContext.destination);
@@ -103,6 +109,18 @@
         {
           audioAlertTrack.connect(audioContext.destination);
           audioAlertElement.play();
+        }
+
+        function playScore()
+        {
+          audioScoreTrack.connect(audioContext.destination);
+          audioScoreElement.play();
+        }
+
+        function playMessg()
+        {
+          audioMessgTrack.connect(audioContext.destination);
+          audioMessgElement.play();
         }
 
         // Request screen lock while visible
@@ -249,9 +267,11 @@
             window.AWP.exports.Gnav_Cache_Time (Date.now());
             window.AWP.exports.Gnav_Process_Timer();
             const Code_Id = window.AWP.exports.Gnav_Notification_Request();
-            if      (Code_Id === 1) { playBweep(); } //-> sector incrusion/excursion
-            else if (Code_Id === 2) { playAtent(); } //-> MC too optimistic
-            else if (Code_Id === 3) { playAlert(); } //-> home is below safety height
+            if      (Code_Id == 1) { playBweep(); } //-> sector incrusion/excursion
+            else if (Code_Id == 2) { playAtent(); } //-> MC too optimistic
+            else if (Code_Id == 3) { playAlert(); } //-> home is below safety height
+            else if (Code_Id == 4) { playScore(); } //-> waypoint reached
+            else if (Code_Id == 5) { playMessg(); } //-> 100m climb detection
             window.requestAnimationFrame (window.AWP.exports.Gnav_Refresh_Screen);
           }
         }
