@@ -10,7 +10,7 @@ G-NAV is almost entirely written in Ada and it is compiled to [WASM](https://web
 There is also a native version of the software that you can find [here](https://github.com/GuillermoHazebrouck/gnav). The applications are quite similar, although there will be more and more discrepancies as this project evolves.
 
 ## Operation
-G-NAV provides navigation functions, real time traffic and meteo data, sector awareness alerts and more.
+G-NAV provides navigation functions, real time traffic and meteo data, sector awareness alerts and more. Take a look at the _Wiki pages_ to find more information.
 
 To operate G-NAV, please read the user's manual located in the `docs` folder. This document covers the user functions and the web system administration. Be aware that the project is still under development and some functions are not covered in details.
 
